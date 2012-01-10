@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="fill_parent">
+
+	<ScrollView android:id="@+id/scroll" android:layout_width="fill_parent"
+		android:layout_height="wrap_content">
+
+		<LinearLayout android:id="@+id/forumPost"
+			android:layout_width="fill_parent" android:layout_height="wrap_content"
+			android:orientation="vertical">
+
+			<TextView android:id="@+id/from" android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:textSize="14sp"
+				android:textStyle="bold" android:singleLine="true" android:paddingLeft="5dip" android:paddingTop="5dip"/>
+			<TextView android:id="@+id/subject" android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:textSize="14sp" android:paddingLeft="5dip"/>
+			<TextView android:id="@+id/date" android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:textSize="12sp"
+				android:singleLine="true" android:paddingLeft="5dip" android:paddingBottom="5dip" />
+
+		</LinearLayout>
+	</ScrollView>
+</LinearLayout>

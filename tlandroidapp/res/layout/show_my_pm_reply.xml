@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="fill_parent"
+	android:orientation="vertical">
+	<ScrollView
+		android:layout_width="fill_parent" android:layout_height="fill_parent"
+		android:fillViewport="true" android:layout_marginBottom="50dip">
+		<LinearLayout android:padding="5dip"
+			android:layout_width="fill_parent" android:layout_height="wrap_content"
+			android:orientation="vertical">
+			<LinearLayout android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:orientation="horizontal">
+				<EditText android:id="@+id/toEditText"
+					android:layout_width="fill_parent" android:layout_height="wrap_content"
+					android:singleLine="true" android:hint="to" />
+			</LinearLayout>
+			<LinearLayout android:layout_width="fill_parent"
+				android:layout_height="wrap_content" android:orientation="horizontal">
+				<EditText android:id="@+id/subjectEditText"
+					android:layout_width="fill_parent" android:layout_height="wrap_content"
+					android:singleLine="true" android:hint="subject" android:maxLength="100" />
+			</LinearLayout>
+
+			<EditText android:id="@+id/messageEditText"
+				android:layout_width="fill_parent" android:layout_height="wrap_content"
+				android:hint="message" android:layout_weight="1.0" />
+		</LinearLayout>
+	</ScrollView>
+	<RelativeLayout android:layout_marginTop="-50dip"
+		android:gravity="bottom" android:layout_height="wrap_content"
+		android:layout_width="fill_parent">
+		<Button android:id="@+id/replyButton" android:text="Send"
+			android:layout_height="wrap_content" android:layout_width="fill_parent" />
+	</RelativeLayout>
+</LinearLayout>
+

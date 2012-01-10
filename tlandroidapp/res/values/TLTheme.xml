@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<style name="TLTheme" parent="@android:style/Theme.Light">
+    	<item name="android:colorBackground">@color/TLBlue</item>
+    	  <item name="android:colorForeground">@color/TLBlue2</item>
+    	  <item name="android:windowBackground">@color/TLBlue</item>
+		 <item name="android:cacheColorHint">@color/TLBlue</item>
+
+	</style>
+	
+</resources>

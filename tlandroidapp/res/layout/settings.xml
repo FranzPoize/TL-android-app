@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="vertical"
+	android:padding="5dip">
+	<LinearLayout android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:orientation="horizontal">
+		<CheckBox android:id="@+id/disableSmartParsing"
+			android:layout_width="wrap_content" android:layout_height="fill_parent"
+			android:gravity="center_vertical" />
+		<LinearLayout android:layout_width="fill_parent"
+			android:layout_height="wrap_content" android:orientation="vertical"
+			android:layout_marginLeft="10dip">
+
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:text="Disable Smart Parsing"
+				android:textStyle="bold" />
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="May improve app stability at the expense of performance. Only recommended on high-end phones." />
+		</LinearLayout>
+	</LinearLayout>
+	<LinearLayout android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="10dip">
+		<CheckBox android:id="@+id/viewAll"
+			android:layout_width="wrap_content" android:layout_height="fill_parent"
+			android:gravity="center_vertical" />
+		<LinearLayout android:layout_width="fill_parent"
+			android:layout_height="wrap_content" android:orientation="vertical"
+			android:layout_marginLeft="10dip">
+
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:text="View All Thread Pages"
+				android:textStyle="bold" />
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="If possible, displays the entire thread instead of breaking it down page-by-page. Only recommended on high-end phones." />
+		</LinearLayout>
+	</LinearLayout>
+</LinearLayout>

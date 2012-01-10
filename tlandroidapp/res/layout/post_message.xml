@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent"
+  android:orientation="vertical"
+  >
+  <ScrollView
+  	android:layout_width="fill_parent"
+  	android:layout_height="fill_parent"
+  	android:layout_marginBottom="50dip"
+  	android:fillViewport="true"
+  	>
+	  <LinearLayout
+		  xmlns:android="http://schemas.android.com/apk/res/android"
+		  android:layout_width="fill_parent"
+		  android:layout_height="wrap_content"
+		  android:orientation="vertical"
+	  >
+		  <EditText
+		  	android:id="@+id/messageEditText"
+		  	android:layout_weight="1.0"
+		  	android:layout_width="fill_parent"
+		  	android:layout_height="wrap_content" />
+
+	    </LinearLayout>
+	</ScrollView>
+	<RelativeLayout android:layout_marginTop="-50dip" android:gravity="bottom" android:layout_height="wrap_content" android:layout_width="fill_parent">
+	  	<Button
+	 		android:text="Post"
+	   		android:id="@+id/postButton"
+	   		android:layout_width="fill_parent"
+	   		android:layout_height="wrap_content" />
+	 </RelativeLayout>
+ </LinearLayout>

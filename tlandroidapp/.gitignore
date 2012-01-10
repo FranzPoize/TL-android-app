@@ -1,0 +1,7 @@
+R.java
+
+bin/*
+.settings/*
+
+*.class
+*.swp
