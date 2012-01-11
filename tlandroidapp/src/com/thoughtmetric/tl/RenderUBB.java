@@ -250,7 +250,7 @@ public class RenderUBB {
 				renderStyleAttribute(style, start, end);
 			}
 
-		} else if (nodeString.equals("div") && node.hasAttribute("id") && node.getAttributeByName("id").contains("spoiler")) {
+		} else if (nodeString.equals("div") && node.hasAttribute("id") && (node.getAttributeByName("id").contains("spoiler") || node.getAttributeByName("id").contains("Quote"))) {
 			TextView temp = curTextView;
 			Editable tempEditable = curEditable;
 			makeTextView();
@@ -265,23 +265,7 @@ public class RenderUBB {
 			curSpoilerSpan.setCharSequence((CharSequence) curTextView.getText());
 			curTextView = temp;
 			curEditable = tempEditable;
-		} else if (nodeString.equals("div") && node.hasAttribute("id")) {
-			TextView temp = curTextView;
-			Editable tempEditable = curEditable;
-			makeTextView();
-			curEditable.append("\n");
-			SpoilerSpan tempSpoilerSpan = curSpoilerSpan;
-			SpoilerSpan tempParentSpoilerSpan = parentSpoilerSpan;	// In retrospect perhaps I should have just gone with an actually recursive implementation
-			parentSpoilerSpan = curSpoilerSpan;
-			renderChildren(node);
-			curSpoilerSpan = tempSpoilerSpan;
-			parentSpoilerSpan = tempParentSpoilerSpan; 
-			curSpoilerSpan.setTagNode(node);
-			curSpoilerSpan.setCharSequence((CharSequence) curTextView.getText());
-			curTextView = temp;
-			curEditable = tempEditable;
-		} 
-		else if (nodeString.equals("div") && node.hasAttribute("class") && node.getAttributeByName("class").equals("quote")){
+		} else if (nodeString.equals("div") && node.hasAttribute("class") && node.getAttributeByName("class").equals("quote")){
 			int start = curEditable.length();
 			renderChildren(node);
 			int end = curEditable.length();
@@ -305,9 +289,21 @@ public class RenderUBB {
 			}
 		} 
 		else if (nodeString.equals("a")) {
-			if (node.hasAttribute("onclick")) { // spoiler tag
-				String txt=  HtmlTools.unescapeHtml(node.getChildren().iterator()
-						.next().toString().trim());
+			if (node.hasAttribute("onclick") ) { // spoiler tag
+				String txt ="";
+				//the spoiler 'a' tag contains two span like this <span>+ Show </span> Spoiler<span> + </span>
+				if (node.getAttributeByName("onclick").contains("ShowSpoiler")) {
+					Iterator itTagNode = node.getChildren().iterator();
+					TagNode firstSpan = (TagNode)itTagNode.next();
+					String middleString = HtmlTools.unescapeHtml(itTagNode.next().toString().trim());
+					TagNode thirdSpan = (TagNode)itTagNode.next();
+					txt=  HtmlTools.unescapeHtml(firstSpan.getChildren().iterator().next().toString().trim())
+							+ " " +middleString + " "
+							+HtmlTools.unescapeHtml(thirdSpan.getChildren().iterator().next().toString().trim());
+				} else { //this is for the nested quotes
+					txt = HtmlTools.unescapeHtml(node.getChildren().iterator().next().toString().trim());
+				}
+				
 				int start = curEditable.length();
 				curTextView.append(txt);
 				int end = curEditable.length();

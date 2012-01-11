@@ -90,7 +90,7 @@ public class MyPosts extends ListActivity implements Runnable {
 			TagNode node = TLLib.TagNodeFromURLMyPosts(cleaner, new URL(url), handler, context);
 			handler.sendEmptyMessage(TLHandler.PROGRESS_RENDERING);
 
-			Object [] nodeList = node.evaluateXPath("//table[@width=\"606\"]/tbody/tr[position()>1]");
+			Object [] nodeList = node.evaluateXPath("//table[@width=\"748\"]/tbody/tr[position()>1]");
 			
 			TagNode n;
 			for (Object o : nodeList){

@@ -36,6 +36,7 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -147,9 +148,13 @@ public class TLLib {
         nvps.add(new BasicNameValuePair(PASS_FIELD, pw));
         nvps.add(new BasicNameValuePair(REMEMBERME, "1"));
         nvps.add(new BasicNameValuePair("stage", "1"));
-        nvps.add(new BasicNameValuePair("back_url", "http://www.teamliquid.net/mytlnet/"));
+        nvps.add(new BasicNameValuePair("back_url", "/"));
         nvps.add(new BasicNameValuePair("token", token));
 		Log.d("token:", token);
+		
+		if (cookieStore != null) {
+			httpclient.setCookieStore(cookieStore);
+		}
 
         try {
 			httpost.setEntity(new UrlEncodedFormEntity(nvps));
@@ -157,7 +162,7 @@ public class TLLib {
 			HttpEntity entity = response.getEntity();
 			
 			Header [] headers = response.getHeaders("Set-Cookie");
-			if (headers.length == 0 ){
+			if (headers.length >1 ){
 				loginName = null;
 				loginStatus = false;
 			}
@@ -310,11 +315,14 @@ public class TLLib {
 			handler.sendEmptyMessage(PROGRESS_CONNECTING);
 			
 			DefaultHttpClient httpclient = new DefaultHttpClient();
-			if (login){
+			if (cookieStore != null){
 				httpclient.setCookieStore(cookieStore);
 			}
 			HttpGet httpGet = new HttpGet(url.toExternalForm());
 			HttpResponse response = httpclient.execute(httpGet);
+			if (cookieStore == null){
+				cookieStore = httpclient.getCookieStore();
+			}
 			
 			handler.sendEmptyMessage(PROGRESS_DOWNLOADING);
 			HttpEntity httpEntity = response.getEntity();
@@ -339,7 +347,7 @@ public class TLLib {
 	
 	public static TagNode TagNodeFromURLMyPosts(HtmlCleaner cleaner, URL url,
 			Handler handler, Context context) throws IOException{
-			return TagNodeFromURLEx2(cleaner, url, handler, context, "<table width='606' cellpadding='3' cellspacing='0' border='0' style='border:1px solid #00005D;'>", true);
+			return TagNodeFromURLEx2(cleaner, url, handler, context, "<table width='748' cellpadding='3' cellspacing='0' border='0' style='border:1px solid #00005D;'>", true);
 	}	
 	
 	private static final String APPLICATION_TITLE = "Team Liquid";

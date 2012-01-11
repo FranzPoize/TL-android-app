@@ -54,7 +54,7 @@ import android.widget.ListView;
 
 public class ShowMyPM extends ListActivity implements Runnable {
 	private static final String RESOURCE_PATH = "mytlnet";
-	private static final String PARSE_NODE = null;	// TODO: Figure out why the TagParser won't parse the page when there are new PMs
+	private static final String PARSE_NODE = "<table width='100%' cellspacing='0'>";	// TODO: Figure out why the TagParser won't parse the page when there are new PMs
 	private static final String TAG = "Private Messages";
 	private ProgressDialog progressDialog;
 	private TLHandler handler;
@@ -91,7 +91,7 @@ public class ShowMyPM extends ListActivity implements Runnable {
 			TagNode node = TLLib.TagNodeFromURLEx2(cleaner, new URL(url), handler, context, PARSE_NODE, true);
 			handler.sendEmptyMessage(TLHandler.PROGRESS_RENDERING);
 
-			Object [] nodeList = node.evaluateXPath("//table[@width='505']/tbody/tr[position()>3]");
+			Object [] nodeList = node.evaluateXPath("//tbody/tr[position()>2]");
 			Log.d(TAG, "NodeList Length: "+ nodeList.length);
 			
 			TagNode n;

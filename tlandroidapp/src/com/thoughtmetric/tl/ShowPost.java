@@ -235,9 +235,10 @@ public class ShowPost extends Activity implements Runnable {
 				 forumTagNode = (TagNode) forum[0];
 			}	
 			Object [] postContents = forumTagNode.evaluateXPath(POST_CONTENT_XPATH);
-			TagNode [] posts = new TagNode[postContents.length];
-			TagNode [] postHeaders = new TagNode[postContents.length];
-			int [] postContentType = new int[postContents.length];
+			int offset = ((TagNode)postContents[postContents.length-1]).evaluateXPath("//form[@name='theform']") != null ? 0 : 1;
+			TagNode [] posts = new TagNode[postContents.length - offset];
+			TagNode [] postHeaders = new TagNode[postContents.length - offset];
+			int [] postContentType = new int[postContents.length - offset];
 			
 			int postContentsPos = 0;
 			for (Object o : postContents){
@@ -248,9 +249,11 @@ public class ShowPost extends Activity implements Runnable {
 					postContentType[postContentsPos] = POST_CONTENT_TYPE_NEWS;
 				}
 				else {
-					postHeaders[postContentsPos] = (TagNode)p.evaluateXPath("./tr[1]/td[1]")[0];
-					posts[postContentsPos] = (TagNode)p.evaluateXPath("./tr[2]")[0];
-					postContentType[postContentsPos] = POST_CONTENT_TYPE_DEFAULT;
+					if(p.evaluateXPath("//form").length == 0) {
+						postHeaders[postContentsPos] = (TagNode)p.evaluateXPath("./tr[1]/td[1]")[0];
+						posts[postContentsPos] = (TagNode)p.evaluateXPath("./tr[2]")[0];
+						postContentType[postContentsPos] = POST_CONTENT_TYPE_DEFAULT;
+					}
 				}
 				postContentsPos++;
 			}
@@ -304,19 +307,21 @@ public class ShowPost extends Activity implements Runnable {
 				TagNode postName = (TagNode)postNames[i];
 				int contentType = postContentType[i];
 				//viewList[2*i] = renderHeaderView(postHeaders[i]);
-				if (contentType == POST_CONTENT_TYPE_DEFAULT){
-					renderUBB.renderHeader(postHeaders[i], Integer.parseInt(postName.getAttributeByName("name")), topicId, currentPage);
+				if (postName.getAttributeByName("href") == null) {
+					if (contentType == POST_CONTENT_TYPE_DEFAULT){
+						renderUBB.renderHeader(postHeaders[i], Integer.parseInt(postName.getAttributeByName("name")), topicId, currentPage);
+					}
+					else if (contentType == POST_CONTENT_TYPE_NEWS) {
+						renderUBB.renderNewsHeader(postHeaders[i], Integer.parseInt(postName.getAttributeByName("name")), topicId, currentPage);
+					}
+					else {
+						assert(false);
+					}
+					viewList[2 * i] = renderUBB.curTextView;
+	
+					renderUBB.render(post);
+					viewList[2 * i + 1] = renderUBB.curTextView;
 				}
-				else if (contentType == POST_CONTENT_TYPE_NEWS) {
-					renderUBB.renderNewsHeader(postHeaders[i], Integer.parseInt(postName.getAttributeByName("name")), topicId, currentPage);
-				}
-				else {
-					assert(false);
-				}
-				viewList[2 * i] = renderUBB.curTextView;
-
-				renderUBB.render(post);
-				viewList[2 * i + 1] = renderUBB.curTextView;
 
 			}
 
@@ -493,7 +498,8 @@ public class ShowPost extends Activity implements Runnable {
 					&& handler.progressStatus == TLHandler.PROGRESS_OKAY) {
 				forumPostView.removeAllViews();
 				for (View view : viewList) {
-					forumPostView.addView(view);
+					if (view != null)
+						forumPostView.addView(view);
 				}
 				if (resetScrollPosition){
 					scrollView.scrollTo(0, 0);
