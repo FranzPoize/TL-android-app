@@ -2,4 +2,10 @@
 <resources>
 	<color name="TLBlue">#d9dde0</color>
 	<color name="TLBlue2">#8ea8d1</color>
+	<color name="TLBlue4">#6280A0</color>
+	<color name="TLBlue3">#325080</color>
+	<color name="TLBlue5">#00005d</color>
+	<color name="TLBluePostHeader">#9aacc7</color>
+	<color name="TLText">#13173E</color>
+	<color name="TLText2">#010408</color>
 </resources>
