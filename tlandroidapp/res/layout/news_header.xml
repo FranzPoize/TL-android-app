@@ -1,0 +1,17 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/relativeLayout1"
+	android:layout_width="wrap_content"
+	android:layout_height="fill_parent" >
+	<ImageView android:id="@+id/newsImage" android:src="@drawable/ic_news_header"/>
+	<LinearLayout android:orientation="vertical" android:layout_width="fill_parent"
+	android:layout_height="wrap_content">
+	    <RelativeLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/titleAndText" >
+	        <TextView android:id="@+id/titleView" android:textSize="10dp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentLeft="true" android:layout_alignParentBottom="true"/>
+	        <TextView android:id="@+id/textByView" android:textSize="5dp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentRight="true" android:layout_alignParentBottom="true"/>
+	    </RelativeLayout>
+	    <RelativeLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/dateAndGraphics" >
+	        <TextView android:id="@+id/dateView" android:textSize="5dp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentLeft="true"/>
+	        <TextView android:id="@+id/graphicsByView" android:textSize="5dp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentRight="true"/>
+	    </RelativeLayout>
+	</LinearLayout>
+</RelativeLayout>
