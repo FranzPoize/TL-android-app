@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, 2011 Ali Piccioni & Francois Poizat
+ * Copyright 2010, 2011 Ali Piccioni, Francois Poizat, Bill Xu
  *
  * This program is distributed under the terms of the GNU General Public License
  *
@@ -111,12 +111,15 @@ public class MyPosts extends ListActivity implements Runnable {
 				topicURLString = String.format("%s&currentpage=%d#%d", topicURLString, pageNumber,postNumber);
 
 				PostInfo postInfo = new PostInfo();
-				postInfo.topicStarterString = HtmlTools.unescapeHtml(topicStarter.getChildren().iterator().next().toString());
-				postInfo.repliesString = HtmlTools.unescapeHtml(replies.getChildren().iterator().next().toString());
+				if (topicStarter.getChildren().iterator().hasNext())
+					postInfo.topicStarterString = HtmlTools.unescapeHtml(topicStarter.getChildren().iterator().next().toString());
+				if (replies.getChildren().iterator().hasNext())
+					postInfo.repliesString = HtmlTools.unescapeHtml(replies.getChildren().iterator().next().toString());
 				postInfo.lastMessageString = HtmlTools.unescapeHtml(lastMessage.getChildren().get(0).toString());
 				postInfo.lastMessageString += " " + HtmlTools.unescapeHtml(lastMessage.getChildren().get(2).toString());
 				postInfo.topicURL = topicURLString;
-				postInfo.topicString = HtmlTools.unescapeHtml(topic.getChildren().iterator().next().toString());
+				if (topic.getChildren().iterator().hasNext())
+					postInfo.topicString = HtmlTools.unescapeHtml(topic.getChildren().iterator().next().toString());
 
 				postInfoList.add(postInfo);
 			}

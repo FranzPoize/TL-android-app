@@ -5,3 +5,6 @@ bin/*
 
 *.class
 *.swp
+/gen
+/bin
+/changelog
