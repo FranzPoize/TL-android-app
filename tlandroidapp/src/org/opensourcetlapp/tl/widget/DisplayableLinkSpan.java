@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, 2011 Ali Piccioni & Francois Poizat
+ * Copyright 2010, 2011 Ali Piccioni, Francois Poizat, Bill Xu
  *
  * This program is distributed under the terms of the GNU General Public License
  *
@@ -42,7 +42,7 @@ public class DisplayableLinkSpan extends ClickableSpan{
 	public void onClick(View widget) {
 		// Figure out what to do with the url
 		assert(isDisplayable(url));
-		if (url.contains("viewmessage.php")){
+		if (url.contains("viewmessage.php") || url.contains("viewblog.php")){
 			Intent intent = new Intent().setClass(context, ShowPost.class);
 			intent.putExtra("postURL", url);
 			context.startActivity(intent);
@@ -51,7 +51,7 @@ public class DisplayableLinkSpan extends ClickableSpan{
 	
 	public static boolean isDisplayable(String url){
 		boolean result = false;
-		if (url.contains("viewmessage.php")){
+		if (url.contains("viewmessage.php") || url.contains("viewblog.php")){
 			result = true;
 		}
 		return result;
