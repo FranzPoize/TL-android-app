@@ -2,5 +2,7 @@
 <menu
   xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/refresh"
-        android:title="Refresh Forum List" />  
+        android:title="Refresh Forum List" /> 
+    <item android:id="@+id/unhide"
+        android:title="Unhide All Forums" />   
 </menu>

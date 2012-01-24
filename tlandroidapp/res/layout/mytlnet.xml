@@ -3,7 +3,7 @@
 	android:fillViewport="true" android:orientation="vertical">
 	<LinearLayout android:layout_width="fill_parent"
 		android:layout_height="wrap_content" android:orientation="vertical">
-		<LinearLayout android:layout_width="fill_parent"
+		<LinearLayout android:id="@+id/mytlnetLayout" android:layout_width="fill_parent"
 			android:layout_height="wrap_content" android:orientation="vertical"
 			android:padding="10dip">
 			<LinearLayout android:layout_width="fill_parent"
@@ -45,7 +45,6 @@
 			android:layout_height="wrap_content" android:orientation="vertical">
 			<LinearLayout android:layout_width="fill_parent"
 				android:layout_height="wrap_content" android:orientation="horizontal">
-				
 				<Button android:id="@+id/viewPostsButton" android:text="My Posts"
 					android:enabled="false"
 					android:layout_height="wrap_content"
@@ -55,11 +54,11 @@
 					android:textColor="@color/TLBlue"/>
 			</LinearLayout>
 			<Button android:id="@+id/pmButton" android:text="PM"
-				android:enabled="false" android:layout_width="fill_parent"
-				android:layout_height="wrap_content" android:layout_gravity="center_horizontal"
-				android:background="@drawable/button_gradient"
-				android:layout_margin="3dp"
-				android:textColor="@color/TLBlue" />
+					android:enabled="false" android:layout_width="fill_parent"
+					android:layout_height="wrap_content" android:layout_gravity="center_horizontal"
+					android:background="@drawable/button_gradient"
+					android:layout_margin="3dp"
+					android:textColor="@color/TLBlue" />
 			<Button android:id="@+id/settingsButton" android:text="Settings"
 				android:enabled="true" android:layout_width="fill_parent"
 				android:layout_height="wrap_content" android:layout_gravity="center_horizontal"

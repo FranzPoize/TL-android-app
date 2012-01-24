@@ -76,14 +76,16 @@ public class DBHelper {
 		return db.rawQuery(sql, null);
 	}
 	
-	public void insertForum(String name, String url){
-		String sql = String.format("INSERT INTO forums VALUES (NULL, \"%s\", \"%s\")", name, url);
+	public void insertForum(String name, String url,boolean hidden){
+		String sql = String.format("INSERT INTO forums VALUES (NULL, \"%s\", \"%s\",%d)", name, url,hidden ? 1 : 0);
 		db.execSQL(sql);
 	}
 	
 	
-	public Cursor getForums(){
+	public Cursor getForums(boolean hidden){
 		String sql = "SELECT * FROM forums";
+		if (!hidden)
+			sql += " WHERE hidden = 0";
 		return db.rawQuery(sql, null);
 	}
 	
@@ -91,7 +93,7 @@ public class DBHelper {
 		private static final String DATABASE_NAME = "teamliquid";
 		private static final int DATABASE_VERSION = 5;
 
-		private static final String CREATE_FORUMS_TABLE = "CREATE TABLE forums (_id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, url TEXT);";
+		private static final String CREATE_FORUMS_TABLE = "CREATE TABLE forums (_id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, url TEXT,hidden INTEGER);";
 		private static final String CREATE_USER_TABLE = "CREATE TABLE user (username TEXT, password TEXT, valid INTEGER)";
 		
 		public OpenHelper(Context context) {
@@ -111,11 +113,22 @@ public class DBHelper {
 				db.execSQL(CREATE_USER_TABLE);
 			}
 			db.execSQL(sql);
+			db.execSQL(CREATE_FORUMS_TABLE);
 		}
 	}
 
 	public void clear() {
 		String sql = "DELETE FROM forums"; 
+		db.execSQL(sql);
+	}
+
+	public void hideForum(long itemId) {
+		String sql = String.format("UPDATE forums SET hidden = 1 WHERE _id = %d", itemId);
+		db.execSQL(sql);
+	}
+
+	public void unhide() {
+		String sql = "UPDATE forums SET hidden = 0";
 		db.execSQL(sql);
 	}
 }

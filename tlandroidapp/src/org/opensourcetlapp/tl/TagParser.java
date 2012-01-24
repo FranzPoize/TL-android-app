@@ -38,7 +38,7 @@ import android.util.Log;
 
 public class TagParser {
 	private static int end = 0;
-	private static char [] charBuffer = new char[1024];
+	private static char [] charBuffer = new char[2048];
 	private static final String TAG = "TagParser";
 	private static boolean DEBUG = false;
 	

@@ -54,12 +54,15 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
 import android.text.Html;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.SimpleCursorAdapter;
@@ -72,6 +75,7 @@ public class ShowForumList extends ListFragment implements Runnable  {
 	private DBHelper db;
 	private Cursor forumsCursor;
 	private static final int PROGRESS_DIALOG_KEY = 1;
+	boolean seeHidden = false;
 	
 	private Context context;
 	
@@ -99,6 +103,7 @@ public class ShowForumList extends ListFragment implements Runnable  {
 		db = new DBHelper(getActivity());
 		context = getActivity();
 		instance = this;
+		
 		return view;
 	}
 	
@@ -109,8 +114,8 @@ public class ShowForumList extends ListFragment implements Runnable  {
 		db.close();
 	}
 	
-	private void renderForumList() throws IOException{
-		forumsCursor = db.getForums();
+	private void renderForumList(boolean hidden) throws IOException{
+		forumsCursor = db.getForums(hidden);
 		forumsCursor.moveToFirst();
 		if (forumsCursor.isAfterLast()){
 			fetchForumInfo();
@@ -130,11 +135,11 @@ public class ShowForumList extends ListFragment implements Runnable  {
 				TagNode forumNameNode = (TagNode)forumNameObject;
 				String fname = HtmlTools.unescapeHtml(forumNameNode.getChildren().iterator().next().toString().trim());
 				String furl = HtmlTools.unescapeHtml(forumNameNode.getAttributeByName("href"));
-				db.insertForum(fname, furl);
+				db.insertForum(fname, furl, false);
 			}
 			
 			for (int i = 0; i < HARD_CODED_FORUM_NAMES.length; i++){
-				db.insertForum(HARD_CODED_FORUM_NAMES[i], HARD_CODED_FORUM_URLS[i]);
+				db.insertForum(HARD_CODED_FORUM_NAMES[i], HARD_CODED_FORUM_URLS[i], false);
 			}
 			
 			handler.sendEmptyMessage(TLHandler.PROGRESS_RENDERING);
@@ -157,6 +162,33 @@ public class ShowForumList extends ListFragment implements Runnable  {
 	}
 	
 	
+	
+	@Override
+	public void onCreateContextMenu(ContextMenu menu, View v,
+			ContextMenuInfo menuInfo) {
+		super.onCreateContextMenu(menu, v, menuInfo);
+		MenuInflater menuInflater = getActivity().getMenuInflater();
+		menuInflater.inflate(R.menu.hold_forum_menu, menu);
+	}
+
+	public boolean onContextItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.hide:
+			AdapterView.AdapterContextMenuInfo info;
+			try {
+			    info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+			} catch (ClassCastException e) {
+			    Log.e(TAG, "bad menuInfo", e);
+			    return false;
+			}
+			db.hideForum(getListAdapter().getItemId(info.position));
+			doThreadStuff();
+			break;
+		}
+		return true;
+	}
+	
+	
 	@Override
 	public void onCreateOptionsMenu(Menu menu,MenuInflater menuInflater) {
 		menuInflater.inflate(R.menu.show_forums_menu, menu);
@@ -169,6 +201,11 @@ public class ShowForumList extends ListFragment implements Runnable  {
 			doThreadStuff();
 			//renderForumList();
 			break;
+		case R.id.unhide:
+			db.unhide();
+			doThreadStuff();
+			//renderForumList();
+			break;
 		}
 		return true;
 	}
@@ -176,7 +213,7 @@ public class ShowForumList extends ListFragment implements Runnable  {
 	@Override
 	public void run() {
 		try {
-			renderForumList();
+			renderForumList(seeHidden);
 		} catch (IOException e){
 			handler.progressStatus = TLHandler.PROGRESS_NETWORK_DOWN;
 			Log.d(TAG, "Cannot establish connection");	
@@ -216,6 +253,7 @@ public class ShowForumList extends ListFragment implements Runnable  {
 	public void onResume() {
 		super.onResume();
 		doThreadStuff();
+		registerForContextMenu(getListView());
 	};
 	
 	
