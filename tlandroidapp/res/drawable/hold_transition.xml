@@ -1,0 +1,4 @@
+<transition xmlns:android="http://schemas.android.com/apk/res/android">
+  <item android:drawable="@drawable/sub_forum_row_normal" />
+  <item android:drawable="@drawable/sub_forum_row_pressed" />
+</transition>

@@ -5,7 +5,9 @@
 	<color name="TLBlue4">#6280A0</color>
 	<color name="TLBlue3">#325080</color>
 	<color name="TLBlueBlack">#00005d</color>
+	<color name="TLdivider">#7575a3</color>
 	<color name="TLBluePostHeader">#9aacc7</color>
 	<color name="TLText">#13173E</color>
 	<color name="TLText2">#010408</color>
+	<color name="TLPressed">#b58900</color>
 </resources>

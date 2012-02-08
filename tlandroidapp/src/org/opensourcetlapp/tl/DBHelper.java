@@ -76,8 +76,8 @@ public class DBHelper {
 		return db.rawQuery(sql, null);
 	}
 	
-	public void insertForum(String name, String url,boolean hidden){
-		String sql = String.format("INSERT INTO forums VALUES (NULL, \"%s\", \"%s\",%d)", name, url,hidden ? 1 : 0);
+	public void insertForum(String name, String url,boolean hidden,boolean subforum){
+		String sql = String.format("INSERT INTO forums VALUES (NULL, \"%s\", \"%s\",%d,%d)", name, url,hidden ? 1 : 0,subforum ? 1 : 0);
 		db.execSQL(sql);
 	}
 	
@@ -93,7 +93,7 @@ public class DBHelper {
 		private static final String DATABASE_NAME = "teamliquid";
 		private static final int DATABASE_VERSION = 5;
 
-		private static final String CREATE_FORUMS_TABLE = "CREATE TABLE forums (_id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, url TEXT,hidden INTEGER);";
+		private static final String CREATE_FORUMS_TABLE = "CREATE TABLE forums (_id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, url TEXT,hidden INTEGER,subforum INTEGER);";
 		private static final String CREATE_USER_TABLE = "CREATE TABLE user (username TEXT, password TEXT, valid INTEGER)";
 		
 		public OpenHelper(Context context) {
@@ -108,12 +108,8 @@ public class DBHelper {
 
 		@Override
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-			String sql = "DELETE FROM forums";
-			if (oldVersion <= 2){
-				db.execSQL(CREATE_USER_TABLE);
-			}
+			String sql = "ALTER TABLE forums add subforum INTEGER";
 			db.execSQL(sql);
-			db.execSQL(CREATE_FORUMS_TABLE);
 		}
 	}
 

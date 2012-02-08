@@ -35,6 +35,7 @@ import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPatherException;
 import org.opensourcetlapp.tl.R;
+import org.opensourcetlapp.tl.Adapters.ForumsListCurosrAdapter;
 
 
 import android.app.Activity;
@@ -52,6 +53,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
+import android.support.v4.widget.CursorAdapter;
 import android.text.Html;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -71,7 +73,7 @@ import android.widget.TextView;
 public class ShowForumList extends ListFragment implements Runnable  {
 	public static final String TAG = "main";
 	private static TagNode node;
-	private static final String FORUM_NAME_XPATH = "//h2/a[@class='forummsginfo']";
+	private static final String FORUM_NAME_XPATH = "//a[@class='forummsginfo']";
 	private DBHelper db;
 	private Cursor forumsCursor;
 	private static final int PROGRESS_DIALOG_KEY = 1;
@@ -128,18 +130,23 @@ public class ShowForumList extends ListFragment implements Runnable  {
 		String forumURL = TLLib.getAbsoluteURL(Config.FORUM_LIST);
 		try {
 			node = TLLib.TagNodeFromURLShowForumList(cleaner, new URL(forumURL), handler, context);
-			
+			String parent = "";
 			handler.sendEmptyMessage(TLHandler.PROGRESS_SEARCHING);
 			Object[] forumNameNodes = node.evaluateXPath(FORUM_NAME_XPATH);
 			for (Object forumNameObject : forumNameNodes){
 				TagNode forumNameNode = (TagNode)forumNameObject;
 				String fname = HtmlTools.unescapeHtml(forumNameNode.getChildren().iterator().next().toString().trim());
 				String furl = HtmlTools.unescapeHtml(forumNameNode.getAttributeByName("href"));
-				db.insertForum(fname, furl, false);
+				if (forumNameNode.getParent().getName().equals("h2")){
+					db.insertForum(fname, furl, false,false);
+				} else {
+					db.insertForum(fname, furl, false, true);
+				}
+				Log.d("a", "b");
 			}
 			
 			for (int i = 0; i < HARD_CODED_FORUM_NAMES.length; i++){
-				db.insertForum(HARD_CODED_FORUM_NAMES[i], HARD_CODED_FORUM_URLS[i], false);
+				db.insertForum(HARD_CODED_FORUM_NAMES[i], HARD_CODED_FORUM_URLS[i], false,false);
 			}
 			
 			handler.sendEmptyMessage(TLHandler.PROGRESS_RENDERING);
@@ -152,6 +159,7 @@ public class ShowForumList extends ListFragment implements Runnable  {
 		}
 
 	}
+	
 	public void onListItemClick(ListView l, View v, int position, long id) {
 		String forumURLString = forumsCursor.getString(forumsCursor.getColumnIndex("url"));
 		String forumName = forumsCursor.getString(forumsCursor.getColumnIndex("name"));
@@ -199,12 +207,10 @@ public class ShowForumList extends ListFragment implements Runnable  {
 		case R.id.refresh:
 			db.clear();
 			doThreadStuff();
-			//renderForumList();
 			break;
 		case R.id.unhide:
 			db.unhide();
 			doThreadStuff();
-			//renderForumList();
 			break;
 		}
 		return true;
@@ -238,8 +244,7 @@ public class ShowForumList extends ListFragment implements Runnable  {
 			if (msg.what == 0 && this.progressStatus == TLHandler.PROGRESS_OKAY){
 				progressDialog.dismiss();
 				
-				
-				SimpleCursorAdapter adapter = new SimpleCursorAdapter(getActivity(), R.layout.show_forum_list_row, forumsCursor, new String [] {"name"}, new int [] {android.R.id.text1});
+				ForumsListCurosrAdapter adapter = new ForumsListCurosrAdapter(getActivity(), R.layout.show_forum_list_row,R.layout.show_sub_forum_list_row, forumsCursor, new String [] {"name"}, new int [] {android.R.id.text1},CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
 				setListAdapter(adapter);	
 			}
 

@@ -244,17 +244,15 @@ public class ShowPost extends Activity implements Runnable {
 			int postContentsPos = 0;
 			for (Object o : postContents){
 				TagNode p = (TagNode)o;
-				if (p.evaluateXPath("//td[@class='titelhigh']").length == 2){ // NEWS forum OP post
+				if (p.getChildren().size() >= 4){ // NEWS forum OP post
 					postHeaders[postContentsPos] = (TagNode)p.evaluateXPath("./tr[1]")[0];
 					posts[postContentsPos] = (TagNode)p.evaluateXPath("./tr[3]")[0];
 					postContentType[postContentsPos] = POST_CONTENT_TYPE_NEWS;
 				}
 				else {
-					if(p.evaluateXPath("//form").length == 0) {
 						postHeaders[postContentsPos] = (TagNode)p.evaluateXPath("./tr[1]/td[1]")[0];
 						posts[postContentsPos] = (TagNode)p.evaluateXPath("./tr[2]")[0];
 						postContentType[postContentsPos] = POST_CONTENT_TYPE_DEFAULT;
-					}
 				}
 				postContentsPos++;
 			}
@@ -307,7 +305,6 @@ public class ShowPost extends Activity implements Runnable {
 				TagNode post = (TagNode) posts[i];
 				TagNode postName = (TagNode)postNames[i];
 				int contentType = postContentType[i];
-				//viewList[2*i] = renderHeaderView(postHeaders[i]);
 				if (postName.getAttributeByName("href") == null) {
 					if (contentType == POST_CONTENT_TYPE_DEFAULT){
 						renderUBB.renderHeader(postHeaders[i], Integer.parseInt(postName.getAttributeByName("name")), topicId, currentPage);
