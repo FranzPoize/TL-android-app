@@ -22,21 +22,15 @@
 
 package org.opensourcetlapp.tl;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,7 +43,6 @@ import org.apache.http.client.CookieStore;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.htmlcleaner.CleanerProperties;
@@ -59,11 +52,9 @@ import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPatherException;
 import org.htmlcleaner.XmlSerializer;
 
-
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
-import android.os.Message;
 import android.text.Html;
 import android.util.Log;
 
@@ -129,11 +120,12 @@ public class TLLib {
 		// Fetch the token
 		HtmlCleaner cleaner = TLLib.buildDefaultHtmlCleaner();
 		URL url = new URL(LOGIN_URL);
-		TagNode node = TLLib.TagNodeFromURLLoginToken(cleaner, url, handler, context);
+		TagNode node = TagNodeFromURLEx2(cleaner, url, handler, context, "<html>", false);
+		//TagNode node = TLLib.TagNodeFromURLLoginToken(cleaner, url, handler, context);
 		
 		String token = null;
 		try {
-			TagNode result = (TagNode)node.evaluateXPath("//input")[0];
+			TagNode result = (TagNode) (node.evaluateXPath("body/table/tbody/tr/td/table[2]/tbody/tr/td[2]/table/tbody/tr[2]/td/table/tbody/tr/td/table/tbody/tr[2]/td/form/input")[0]);
 			token = result.getAttributeByName("value");
 		} catch (XPatherException e1) {
 			// TODO Auto-generated catch block
