@@ -120,12 +120,12 @@ public class TLLib {
 		// Fetch the token
 		HtmlCleaner cleaner = TLLib.buildDefaultHtmlCleaner();
 		URL url = new URL(LOGIN_URL);
-		TagNode node = TagNodeFromURLEx2(cleaner, url, handler, context, "<html>", false);
-		//TagNode node = TLLib.TagNodeFromURLLoginToken(cleaner, url, handler, context);
+		//TagNode node = TagNodeFromURLEx2(cleaner, url, handler, context, "<html>", false);
+		TagNode node = TLLib.TagNodeFromURLLoginToken(cleaner, url, handler, context);
 		
 		String token = null;
 		try {
-			TagNode result = (TagNode) (node.evaluateXPath("body/table/tbody/tr/td/table[2]/tbody/tr/td[2]/table/tbody/tr[2]/td/table/tbody/tr/td/table/tbody/tr[2]/td/form/input")[0]);
+			TagNode result = (TagNode) (node.evaluateXPath("//input")[0]);
 			token = result.getAttributeByName("value");
 		} catch (XPatherException e1) {
 			// TODO Auto-generated catch block

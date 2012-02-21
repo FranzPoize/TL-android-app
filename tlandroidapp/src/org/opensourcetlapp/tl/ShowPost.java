@@ -236,7 +236,7 @@ public class ShowPost extends Activity implements Runnable {
 				 forumTagNode = (TagNode) forum[0];
 			}	
 			Object [] postContents = forumTagNode.evaluateXPath(POST_CONTENT_XPATH);
-			int offset = ((TagNode)postContents[postContents.length-1]).evaluateXPath("//form[@name='theform']").length > 0 ? 2 : 0;
+			int offset = ((TagNode)postContents[postContents.length-1]).evaluateXPath("//form[@name='theform']").length > 0 ? 1 : 0;
 			TagNode [] posts = new TagNode[postContents.length - offset];
 			TagNode [] postHeaders = new TagNode[postContents.length - offset];
 			int [] postContentType = new int[postContents.length - offset];
@@ -244,15 +244,17 @@ public class ShowPost extends Activity implements Runnable {
 			int postContentsPos = 0;
 			for (Object o : postContents){
 				TagNode p = (TagNode)o;
-				if (p.getChildren().size() >= 4){ // NEWS forum OP post
-					postHeaders[postContentsPos] = (TagNode)p.evaluateXPath("./tr[1]")[0];
-					posts[postContentsPos] = (TagNode)p.evaluateXPath("./tr[3]")[0];
-					postContentType[postContentsPos] = POST_CONTENT_TYPE_NEWS;
-				}
-				else {
-						postHeaders[postContentsPos] = (TagNode)p.evaluateXPath("./tr[1]/td[1]")[0];
-						posts[postContentsPos] = (TagNode)p.evaluateXPath("./tr[2]")[0];
-						postContentType[postContentsPos] = POST_CONTENT_TYPE_DEFAULT;
+				if(postContentsPos < posts.length) {
+					if (p.getChildren().size() >= 4){ // NEWS forum OP post
+						postHeaders[postContentsPos] = (TagNode)p.evaluateXPath("./tr[1]")[0];
+						posts[postContentsPos] = (TagNode)p.evaluateXPath("./tr[3]")[0];
+						postContentType[postContentsPos] = POST_CONTENT_TYPE_NEWS;
+					}
+					else {
+							postHeaders[postContentsPos] = (TagNode)p.evaluateXPath("./tr[1]/td[1]")[0];
+							posts[postContentsPos] = (TagNode)p.evaluateXPath("./tr[2]")[0];
+							postContentType[postContentsPos] = POST_CONTENT_TYPE_DEFAULT;
+					}
 				}
 				postContentsPos++;
 			}
