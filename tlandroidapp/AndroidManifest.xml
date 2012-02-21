@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="org.opensourcetlapp.tl"
-      android:versionCode="37"
-      android:versionName="BETA 0.3.26">
+      android:versionCode="38"
+      android:versionName="BETA 0.3.27">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-sdk android:minSdkVersion="3" android:targetSdkVersion="9"/>
     <application android:icon="@drawable/icon" android:label="@string/app_name" android:theme="@style/TLTheme" android:name=".TLApplication" android:debuggable="true">

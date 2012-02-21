@@ -357,7 +357,7 @@ public class TLLib {
 	}
 
 	public static TagNode TagNodeFromURLLoginToken(HtmlCleaner cleaner, URL url, Handler handler, Context context) throws IOException {
-		return TagNodeFromURLEx2(cleaner, url, handler, context, "<table cellpadding=\"0\" cellspacing=\"0\" style=\"width: 100%; position: relative; margin-bottom: 4px\">", false);
+		return TagNodeFromURLEx2(cleaner, url, handler, context, "<div id=\"loginbox\">", false);
 	}
 	
 	public static TagNode TagNodeFromURLShowForum(HtmlCleaner cleaner, URL url,
