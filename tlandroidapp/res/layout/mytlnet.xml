@@ -4,8 +4,10 @@
     android:layout_height="fill_parent"
     android:fillViewport="true" >
     <LinearLayout
-    android:focusable="true" android:focusableInTouchMode="true"
-    android:layout_width="0px" android:layout_height="0px"/>
+    	android:focusable="true" 
+    	android:focusableInTouchMode="true"
+    	android:layout_width="0px" 
+    	android:layout_height="0px"/>
 
     <LinearLayout
         android:layout_width="fill_parent"
@@ -144,6 +146,4 @@
                 android:textColor="@color/TLBlue" />
         </LinearLayout>
     </LinearLayout>
-
 </ScrollView>
->>>>>>> a9a27ba9cdb97a46eff61dce8438130fea84a71a
