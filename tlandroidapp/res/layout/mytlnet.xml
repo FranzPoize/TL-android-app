@@ -1,73 +1,149 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="fill_parent" android:layout_height="fill_parent"
-	android:fillViewport="true" android:orientation="vertical">
-	<LinearLayout
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:fadingEdgeLength="0dp"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:fillViewport="true" >
+    <LinearLayout
     android:focusable="true" android:focusableInTouchMode="true"
     android:layout_width="0px" android:layout_height="0px"/>
-	<LinearLayout android:layout_width="fill_parent"
-		android:layout_height="wrap_content" android:orientation="vertical">
-		<LinearLayout android:id="@+id/mytlnetLayout" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:orientation="vertical"
-			android:padding="10dip">
-			<LinearLayout android:layout_width="fill_parent"
-				android:layout_height="wrap_content" android:orientation="horizontal">
-				<TextView android:text="LOGIN" android:width="90sp"
-					android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingRight="5dip" 
-					android:textColor="@color/TLText" android:textStyle="bold" android:gravity="right"/>
-				<EditText android:id="@+id/username" android:layout_width="fill_parent"
-					android:layout_height="wrap_content" android:singleLine="true" />
-			</LinearLayout>
-			<LinearLayout android:layout_width="fill_parent"
-				android:layout_height="wrap_content" android:orientation="horizontal">
-				<TextView android:text="PASSWORD" android:width="90sp"
-					android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingRight="5dip" 
-					android:textColor="@color/TLText" android:textStyle="bold" android:gravity="right"/>
-				<EditText android:id="@+id/password" android:paddingLeft="5dip"
-					android:password="true" android:layout_width="fill_parent"
-					android:layout_height="wrap_content" android:singleLine="true" />
-			</LinearLayout>
 
-			<RelativeLayout android:layout_width="fill_parent"
-				android:layout_height="40dp" android:orientation="horizontal">
-				<CheckBox android:id="@+id/rememberMeCheckBox"
-					android:layout_width="wrap_content" android:layout_alignParentLeft="true" android:layout_height="wrap_content" />
-				<TextView android:id="@+id/rememberMeCheckBoxText" android:layout_width="wrap_content"
-					android:layout_height="fill_parent" android:gravity="center" android:layout_toRightOf="@id/rememberMeCheckBox" android:text="Remember me" android:textColor="@color/TLText" />
-				<Button android:id="@+id/loginButton" android:text="Login"
-					android:layout_height="wrap_content" 
-					android:layout_width="wrap_content"
-					android:layout_alignParentRight="true"
-					android:background="@drawable/button_gradient"
-					android:textColor="@color/TLBlue"
-					android:layout_marginRight="3dp"/>
-			</RelativeLayout>
-		</LinearLayout>
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="10dp" >
 
-		<LinearLayout android:paddingLeft="15dip"
-			android:paddingRight="15dip" android:layout_width="fill_parent"
-			android:layout_height="wrap_content" android:orientation="vertical">
-			<LinearLayout android:layout_width="fill_parent"
-				android:layout_height="wrap_content" android:orientation="horizontal">
-				<Button android:id="@+id/viewPostsButton" android:text="My Posts"
-					android:enabled="false"
-					android:layout_height="wrap_content"
-					android:layout_width="fill_parent" 
-					android:background="@drawable/button_gradient"
-					android:layout_margin="3dp"
-					android:textColor="@color/TLBlue"/>
-			</LinearLayout>
-			<Button android:id="@+id/pmButton" android:text="PM"
-					android:enabled="false" android:layout_width="fill_parent"
-					android:layout_height="wrap_content" android:layout_gravity="center_horizontal"
-					android:background="@drawable/button_gradient"
-					android:layout_margin="3dp"
-					android:textColor="@color/TLBlue" />
-			<Button android:id="@+id/settingsButton" android:text="Settings"
-				android:enabled="true" android:layout_width="fill_parent"
-				android:layout_height="wrap_content" android:layout_gravity="center_horizontal"
-				android:background="@drawable/button_gradient"
-				android:layout_margin="3dp"
-				android:textColor="@color/TLBlue" />
-		</LinearLayout>
-	</LinearLayout>
-</LinearLayout>
+        <LinearLayout
+            android:id="@+id/mytlnetLayout"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="10dip" >
+
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" >
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="right"
+                    android:paddingRight="5dip"
+                    android:text="LOGIN"
+                    android:textColor="@color/TLText"
+                    android:textStyle="bold"
+                    android:width="90sp" />
+
+                <EditText
+                    android:id="@+id/username"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:singleLine="true" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" >
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="right"
+                    android:paddingRight="5dip"
+                    android:text="PASSWORD"
+                    android:textColor="@color/TLText"
+                    android:textStyle="bold"
+                    android:width="90sp" />
+
+                <EditText
+                    android:id="@+id/password"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="5dip"
+                    android:password="true"
+                    android:singleLine="true" />
+            </LinearLayout>
+
+            <RelativeLayout
+                android:layout_width="fill_parent"
+                android:layout_height="40dp"
+                android:orientation="horizontal" >
+
+                <CheckBox
+                    android:id="@+id/rememberMeCheckBox"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true" />
+
+                <TextView
+                    android:id="@+id/rememberMeCheckBoxText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:layout_toRightOf="@id/rememberMeCheckBox"
+                    android:gravity="center"
+                    android:text="Remember me"
+                    android:textColor="@color/TLText" />
+
+                <Button
+                    android:id="@+id/loginButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_marginRight="3dp"
+                    android:background="@drawable/button_gradient"
+                    android:text="Login"
+                    android:textColor="@color/TLBlue" />
+            </RelativeLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingLeft="15dip"
+            android:paddingRight="15dip" >
+
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" >
+
+                <Button
+                    android:id="@+id/viewPostsButton"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="3dp"
+                    android:background="@drawable/button_gradient"
+                    android:enabled="false"
+                    android:text="My Posts"
+                    android:textColor="@color/TLBlue" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/pmButton"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_margin="3dp"
+                android:background="@drawable/button_gradient"
+                android:enabled="false"
+                android:text="PM"
+                android:textColor="@color/TLBlue" />
+
+            <Button
+                android:id="@+id/settingsButton"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_margin="3dp"
+                android:background="@drawable/button_gradient"
+                android:enabled="true"
+                android:text="Settings"
+                android:textColor="@color/TLBlue" />
+        </LinearLayout>
+    </LinearLayout>
+
+</ScrollView>
+>>>>>>> a9a27ba9cdb97a46eff61dce8438130fea84a71a
