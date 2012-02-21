@@ -12,9 +12,6 @@ import java.util.Map;
 
 /**
  * <p>DOM serializer - creates xml DOM.</p>
- *
- * Created by: Vladimir Nikic<br/>
- * Date: April, 2007.
  */
 public class DomSerializer {
 
@@ -34,12 +31,77 @@ public class DomSerializer {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
         Document document = factory.newDocumentBuilder().newDocument();
-        Element rootElement = document.createElement(rootNode.getName());
+        Element rootElement = createElement(rootNode, document);
         document.appendChild(rootElement);
+
+        setAttributes(rootNode, rootElement);
 
         createSubnodes(document, rootElement, rootNode.getChildren());
 
         return document;
+    }
+
+    private Element createElement(TagNode node, Document document) {
+        String name = node.getName();
+        boolean nsAware = props.isNamespacesAware();
+        String prefix = Utils.getXmlNSPrefix(name);
+        Map<String, String> nsDeclarations = node.getNamespaceDeclarations();
+        String nsURI = null;
+        if (prefix != null) {
+            if (nsAware) {
+                if (nsDeclarations != null) {
+                    nsURI = nsDeclarations.get(prefix);
+                }
+                if (nsURI == null) {
+                    nsURI = node.getNamespaceURIOnPath(prefix);
+                }
+                if (nsURI == null) {
+                    nsURI = prefix;
+                }
+            } else {
+                name = Utils.getXmlName(name);
+            }
+        } else {
+            if (nsAware) {
+                if (nsDeclarations != null) {
+                    nsURI = nsDeclarations.get("");
+                }
+                if (nsURI == null) {
+                    nsURI = node.getNamespaceURIOnPath(prefix);
+                }
+            }
+        }
+
+        if (nsAware && nsURI != null) {
+            return document.createElementNS(nsURI, name);
+        } else {
+            return document.createElement(name);
+        }
+    }
+
+    private void setAttributes(TagNode node, Element element) {
+        for (Map.Entry<String, String> entry: node.getAttributes().entrySet()) {
+            String attrName = entry.getKey();
+            String attrValue = entry.getValue();
+            if (escapeXml) {
+                attrValue = Utils.escapeXml(attrValue, props, true);
+            }
+            
+            String attPrefix = Utils.getXmlNSPrefix(attrName);
+            if (attPrefix != null) {
+                if (props.isNamespacesAware()) {
+                    String nsURI = node.getNamespaceURIOnPath(attPrefix);
+                    if (nsURI == null) {
+                        nsURI = attPrefix;
+                    }
+                    element.setAttributeNS(nsURI, attrName, attrValue);
+                } else {
+                    element.setAttribute(Utils.getXmlName(attrName), attrValue);
+                }
+            } else {
+                element.setAttribute(attrName, attrValue);
+            }
+        }
     }
 
     private void createSubnodes(Document document, Element element, List tagChildren) {
@@ -47,14 +109,13 @@ public class DomSerializer {
             Iterator it = tagChildren.iterator();
             while (it.hasNext()) {
                 Object item = it.next();
-                if (item instanceof CommentToken) {
-                    CommentToken commentToken = (CommentToken) item;
-                    Comment comment = document.createComment( commentToken.getContent() );
+                if (item instanceof CommentNode) {
+                    CommentNode commentNode = (CommentNode) item;
+                    Comment comment = document.createComment( commentNode.getContent().toString() );
                     element.appendChild(comment);
-                } else if (item instanceof ContentToken) {
+                } else if (item instanceof ContentNode) {
                     String nodeName = element.getNodeName();
-                    ContentToken contentToken = (ContentToken) item;
-                    String content = contentToken.getContent();
+                    String content = item.toString();
                     boolean specialCase = props.isUseCdataForScriptAndStyle() &&
                                           ("script".equalsIgnoreCase(nodeName) || "style".equalsIgnoreCase(nodeName));
                     if (escapeXml && !specialCase) {
@@ -63,18 +124,9 @@ public class DomSerializer {
                     element.appendChild( specialCase ? document.createCDATASection(content) : document.createTextNode(content) );
                 } else if (item instanceof TagNode) {
                     TagNode subTagNode = (TagNode) item;
-                    Element subelement = document.createElement( subTagNode.getName() );
-                    Map attributes =  subTagNode.getAttributes();
-                    Iterator entryIterator = attributes.entrySet().iterator();
-                    while (entryIterator.hasNext()) {
-                        Map.Entry entry = (Map.Entry) entryIterator.next();
-                        String attrName = (String) entry.getKey();
-                        String attrValue = (String) entry.getValue();
-                        if (escapeXml) {
-                            attrValue = Utils.escapeXml(attrValue, props, true);
-                        }
-                        subelement.setAttribute(attrName, attrValue);
-                    }
+                    Element subelement = createElement(subTagNode, document);
+
+                    setAttributes(subTagNode, subelement);
 
                     // recursively create subnodes
                     createSubnodes(document, subelement, subTagNode.getChildren());

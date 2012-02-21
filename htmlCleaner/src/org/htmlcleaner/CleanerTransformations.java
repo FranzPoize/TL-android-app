@@ -45,7 +45,7 @@ import java.util.Map;
  */
 public class CleanerTransformations {
 
-    private Map<String, TagTransformation> mappings = new HashMap<String, TagTransformation>();
+    private Map mappings = new HashMap();
 
     /**
      * Adds specified tag transformation to the collection.

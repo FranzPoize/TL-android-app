@@ -43,9 +43,6 @@ import java.util.*;
 
 /**
  * <p>Compact XML serializer - creates resulting XML by stripping whitespaces.</p>
- *
- * Created by: Vladimir Nikic<br/>
- * Date: November, 2006.
  */
 public class CompactXmlSerializer extends XmlSerializer {
 
@@ -61,23 +58,21 @@ public class CompactXmlSerializer extends XmlSerializer {
             ListIterator childrenIt = tagChildren.listIterator();
             while ( childrenIt.hasNext() ) {
                 Object item = childrenIt.next();
-                if (item != null) {
-                    if ( item instanceof ContentToken ) {
-                    	String content = ((ContentToken) item).getContent().trim();
-                        writer.write( dontEscape(tagNode) ? content.replaceAll("]]>", "]]&gt;") : escapeXml(content) );
+                if (item instanceof ContentNode) {
+                    String content = item.toString().trim();
+                    writer.write( dontEscape(tagNode) ? content.replaceAll("]]>", "]]&gt;") : escapeXml(content) );
 
-                        if (childrenIt.hasNext()) {
-                            if ( !Utils.isWhitespaceString(childrenIt.next()) ) {
-                                writer.write("\n");
-                            }
-                            childrenIt.previous();
+                    if (childrenIt.hasNext()) {
+                        if ( !Utils.isWhitespaceString(childrenIt.next()) ) {
+                            writer.write("\n");
                         }
-                    } else if (item instanceof CommentToken) {
-                    	String content = ((CommentToken) item).getCommentedContent().trim();
-                    	writer.write(content);
-                    } else {
-                    	((BaseToken)item).serialize(this, writer);
+                        childrenIt.previous();
                     }
+                } else if (item instanceof CommentNode) {
+                    String content = ((CommentNode) item).getCommentedContent().trim();
+                    writer.write(content);
+                } else if (item instanceof BaseToken) {
+                    ((BaseToken)item).serialize(this, writer);
                 }
             }
 

@@ -42,9 +42,6 @@ import java.io.Writer;
 
 /**
  * <p>HTML tag end token.</p>
- *
- * Created by: Vladimir Nikic<br/>
- * Date: November, 2006.
  */
 public class EndTagToken extends TagToken {
 
@@ -55,11 +52,11 @@ public class EndTagToken extends TagToken {
         super(name == null ? null : name.toLowerCase());
     }
 
-    void addAttribute(String attName, String attValue) {
+    void setAttribute(String attName, String attValue) {
         // do nothing - simply ignore attributes in closing tag
     }
     
-    public void serialize(XmlSerializer xmlSerializer, Writer writer) {
+    public void serialize(Serializer serializer, Writer writer) {
     	// do nothing - simply ignore serialization
     }
 
