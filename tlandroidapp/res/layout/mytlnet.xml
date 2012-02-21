@@ -3,17 +3,20 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:fillViewport="true" >
-    <LinearLayout
-    	android:focusable="true" 
-    	android:focusableInTouchMode="true"
-    	android:layout_width="0px" 
-    	android:layout_height="0px"/>
 
     <LinearLayout
+        android:focusable="true" 
+	    android:focusableInTouchMode="true"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingBottom="10dp" >
+        
+        <LinearLayout
+	    	android:focusable="true" 
+	    	android:focusableInTouchMode="true"
+	    	android:layout_width="0px" 
+	    	android:layout_height="0px"/>
 
         <LinearLayout
             android:id="@+id/mytlnetLayout"
