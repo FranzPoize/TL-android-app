@@ -4,29 +4,28 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import org.htmlcleaner.DefaultTagProvider;
 import org.htmlcleaner.HtmlCleaner;
-import org.htmlcleaner.TagInfo;
 import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPatherException;
-import org.opensourcetlapp.tl.Structs.PostInfo;
 
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
+import android.widget.TextView;
 
 public class ShowThread extends ListActivity implements Runnable {
 
@@ -41,7 +40,7 @@ public class ShowThread extends ListActivity implements Runnable {
 	private int lastPage;
 	private boolean postLocked;
 	
-	private CustomImageGetter imageGetter;
+	private static CustomImageGetter imageGetter;
 	
 	private int displayPostId;
 	private int currentPage;
@@ -49,7 +48,7 @@ public class ShowThread extends ListActivity implements Runnable {
 	private HtmlCleaner cleaner;
 	private Context context;
 	
-	private PostData[] postList;
+	private static PostData[] postList;
 	
 	private ShowPostHandler handler;
 	private ProgressDialog progressDialog;
@@ -83,12 +82,7 @@ public class ShowThread extends ListActivity implements Runnable {
 		refreshDisplay();
 		handler.sendEmptyMessage(0);
 		
-		setListAdapter(new ArrayAdapter<View>(this, R.layout.show_thread_row,(View[]) null) {
-			@Override
-			public View getView(int position, View convertView,ViewGroup parent) {
-				return null;
-			}
-		});
+		setListAdapter(new EfficientArrayAdapter(this, R.layout.show_thread_row,(PostData[]) postList));
 	}
 	
 	private void parsePostURL() {
@@ -146,7 +140,7 @@ public class ShowThread extends ListActivity implements Runnable {
 			}
 			
 			Object[] posts =  node.evaluateXPath("//table[@width='742']/tbody/tr");
-			int offset = ((TagNode)posts[posts.length-1]).evaluateXPath("//form[@name='theform']").length > 0 ? 2 : 1;
+			int offset = ((TagNode)posts[posts.length-1]).evaluateXPath("//form[@name='theform']").length > 0 ? 2 : 2;
 			
 			postList = new PostData[posts.length - offset];
 			
@@ -209,7 +203,7 @@ public class ShowThread extends ListActivity implements Runnable {
 		}
 	};
 	
-	private class PostData {
+	public class PostData {
 		private String content;
 		
 		private String poster;
@@ -217,6 +211,8 @@ public class ShowThread extends ListActivity implements Runnable {
 		private String countryDate;
 		
 		private String icon;
+		
+		private String title;
 		
 		private String textBy;
 		
@@ -231,14 +227,19 @@ public class ShowThread extends ListActivity implements Runnable {
 		public void buildHeader(boolean type2, TagNode post) {
 			try {
 				this.setIcon(((TagNode)post.evaluateXPath("//img")[0]).getAttributeByName("src"));
-				String[] infos = ((TagNode)post.evaluateXPath("//span[@class=forummsginfo]")[0]).getChildren().get(2).toString().split("\\s\\s\\s");
-				this.setPoster(infos[0]);
-				this.setCountryDate(infos[1]);
+				if (!type2) {
+					String[] infos = ((TagNode)post.evaluateXPath("//span[@class='forummsginfo']")[0]).getChildren().get(2).toString().split("&nbsp;");
+					this.setPoster(infos[1]);
+					this.setCountryDate(infos[2]);
+				} else {
+					this.setTitle(((TagNode)((TagNode)((TagNode)post.evaluateXPath("//td")[0]).getChildren().get(2)).getChildren().get(1)).getChildren().get(0).toString());
+				}
+				
 				
 				this.setType(type2 ? "news" : "normal");
 			
 			} catch (XPatherException e) {
-				Log.d("show thread", "Problem parsing header's stuff")
+				Log.d("show thread", "Problem parsing header's stuff");
 			}
 			
 		}
@@ -279,6 +280,14 @@ public class ShowThread extends ListActivity implements Runnable {
 			this.type = type;
 		}
 
+		public String getTitle() {
+			return title;
+		}
+
+		public void setTitle(String title) {
+			this.title = title;
+		}
+
 		public String getPostId() {
 			return postId;
 		}
@@ -296,5 +305,83 @@ public class ShowThread extends ListActivity implements Runnable {
 		}
 		
 		
+	}
+	
+	public static class EfficientArrayAdapter extends BaseAdapter {
+		private PostData[] datas;
+		
+		public EfficientArrayAdapter(Context context, int textViewResourceId,
+				PostData[] objects) {
+			this.datas = objects;
+			mInflater = LayoutInflater.from(context);
+		}
+		
+		public int getCount() {
+            return datas.length;
+        }
+
+
+        @Override
+		public PostData getItem(int position) {
+			return datas[position];
+		}
+
+		public long getItemId(int position) {
+            return position;
+        }
+
+
+
+		private LayoutInflater mInflater;
+		
+		
+		
+		@Override
+		public View getView(int position, View convertView,ViewGroup parent) {
+			ViewHolder holder;
+			if (convertView == null) {
+				convertView = mInflater.inflate(R.layout.show_thread_row, null);
+
+				holder = new ViewHolder();
+				
+				holder.content = (WebView)convertView.findViewById(R.id.postContent);
+				holder.poster = (TextView)convertView.findViewById(R.id.posterName);
+				holder.countryDate = (TextView)convertView.findViewById(R.id.postDate);
+				holder.icon = (ImageView)convertView.findViewById(R.id.postIcon);
+				holder.position = (TextView)convertView.findViewById(R.id.posterInfos);
+
+				convertView.setTag(holder);
+			} else {
+				holder = (ViewHolder)convertView.getTag();
+				if (holder == null) {
+					holder = new ViewHolder();
+					convertView.setTag(holder);
+				}
+			}
+			final int pos = position;
+			String positionStr = String.valueOf(pos);
+			holder.content.loadData(getItem(pos).getContent(), "text/html", null);
+			holder.content.postInvalidate();
+			holder.icon.setImageDrawable(imageGetter.getDrawable(getItem(pos).getIcon()));
+			
+			if (getItem(pos).getType().equals("news")) {
+				holder.poster.setText(getItem(pos).getTitle());
+			} else {
+				holder.poster.setText(getItem(pos).getPoster());
+				holder.countryDate.setText(getItem(pos).getCountryDate());
+			}
+			positionStr += " "+String.valueOf(pos);
+			holder.position.setText(positionStr);
+			
+			return convertView;
+		}
+		
+		static class ViewHolder {
+			TextView position;
+			ImageView icon;
+			WebView content;
+			TextView poster;
+			TextView countryDate;
+	    }
 	}
 }
