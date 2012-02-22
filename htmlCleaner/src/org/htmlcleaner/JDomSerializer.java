@@ -1,53 +1,51 @@
 package org.htmlcleaner;
 
-import org.w3c.dom.Comment;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+import org.jdom.*;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 /**
- * <p>DOM serializer - creates xml DOM.</p>
+ * <p>JDom serializer - creates xml JDom instance out of the TagNode.</p>
  */
-public class DomSerializer {
+public class JDomSerializer {
+
+    private DefaultJDOMFactory factory;
 
     protected CleanerProperties props;
     protected boolean escapeXml = true;
 
-    public DomSerializer(CleanerProperties props, boolean escapeXml) {
+    public JDomSerializer(CleanerProperties props, boolean escapeXml) {
         this.props = props;
         this.escapeXml = escapeXml;
     }
 
-    public DomSerializer(CleanerProperties props) {
+    public JDomSerializer(CleanerProperties props) {
         this(props, true);
     }
 
-    public Document createDOM(TagNode rootNode) throws ParserConfigurationException {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-
-        Document document = factory.newDocumentBuilder().newDocument();
-        Element rootElement = createElement(rootNode, document);
-        document.appendChild(rootElement);
+    public Document createJDom(TagNode rootNode) {
+        this.factory = new DefaultJDOMFactory();
+        Element rootElement = createElement(rootNode);
+        Document document = this.factory.document(rootElement);
 
         setAttributes(rootNode, rootElement);
 
-        createSubnodes(document, rootElement, rootNode.getChildren());
+        createSubnodes(rootElement, rootNode.getChildren());
 
         return document;
     }
 
-    private Element createElement(TagNode node, Document document) {
+    private Element createElement(TagNode node) {
         String name = node.getName();
         boolean nsAware = props.isNamespacesAware();
         String prefix = Utils.getXmlNSPrefix(name);
         Map<String, String> nsDeclarations = node.getNamespaceDeclarations();
         String nsURI = null;
         if (prefix != null) {
+            name = Utils.getXmlName(name);
             if (nsAware) {
                 if (nsDeclarations != null) {
                     nsURI = nsDeclarations.get(prefix);
@@ -58,8 +56,6 @@ public class DomSerializer {
                 if (nsURI == null) {
                     nsURI = prefix;
                 }
-            } else {
-                name = Utils.getXmlName(name);
             }
         } else {
             if (nsAware) {
@@ -72,10 +68,29 @@ public class DomSerializer {
             }
         }
 
+        Element element;
         if (nsAware && nsURI != null) {
-            return document.createElementNS(nsURI, name);
+            Namespace ns = prefix == null ? Namespace.getNamespace(nsURI) : Namespace.getNamespace(prefix, nsURI);
+            element = factory.element(name, ns);
         } else {
-            return document.createElement(name);
+            element = factory.element(name);
+        }
+
+        if (nsAware) {
+            defineNamespaceDeclarations(node, element);
+        }
+        return element;
+    }
+
+    private void defineNamespaceDeclarations(TagNode node, Element element) {
+        Map<String, String> nsDeclarations = node.getNamespaceDeclarations();
+        if (nsDeclarations != null) {
+            for (Map.Entry<String, String> nsEntry: nsDeclarations.entrySet()) {
+                String nsPrefix = nsEntry.getKey();
+                String nsURI = nsEntry.getValue();
+                Namespace ns = nsPrefix == null || "".equals(nsPrefix) ? Namespace.getNamespace(nsURI) : Namespace.getNamespace(nsPrefix, nsURI);
+                element.addNamespaceDeclaration(ns);
+            }
         }
     }
 
@@ -86,55 +101,58 @@ public class DomSerializer {
             if (escapeXml) {
                 attrValue = Utils.escapeXml(attrValue, props, true);
             }
-            
             String attPrefix = Utils.getXmlNSPrefix(attrName);
+            Namespace ns = null;
             if (attPrefix != null) {
+                attrName = Utils.getXmlName(attrName);
                 if (props.isNamespacesAware()) {
                     String nsURI = node.getNamespaceURIOnPath(attPrefix);
                     if (nsURI == null) {
                         nsURI = attPrefix;
                     }
-                    element.setAttributeNS(nsURI, attrName, attrValue);
-                } else {
-                    element.setAttribute(Utils.getXmlName(attrName), attrValue);
+                    ns = Namespace.getNamespace(attPrefix, nsURI);
                 }
-            } else {
+            }
+            if (ns == null) {
                 element.setAttribute(attrName, attrValue);
+            } else {
+                element.setAttribute(attrName, attrValue, ns);
             }
         }
     }
 
-    private void createSubnodes(Document document, Element element, List tagChildren) {
+    private void createSubnodes(Element element, List tagChildren) {
         if (tagChildren != null) {
             Iterator it = tagChildren.iterator();
             while (it.hasNext()) {
                 Object item = it.next();
                 if (item instanceof CommentNode) {
                     CommentNode commentNode = (CommentNode) item;
-                    Comment comment = document.createComment( commentNode.getContent().toString() );
-                    element.appendChild(comment);
+                    Comment comment = factory.comment( commentNode.getContent().toString() );
+                    element.addContent(comment);
                 } else if (item instanceof ContentNode) {
-                    String nodeName = element.getNodeName();
+                    String nodeName = element.getName();
                     String content = item.toString();
                     boolean specialCase = props.isUseCdataForScriptAndStyle() &&
-                                          ("script".equalsIgnoreCase(nodeName) || "style".equalsIgnoreCase(nodeName));
+                                          ("script".equalsIgnoreCase(nodeName) || "style".equalsIgnoreCase(nodeName));                    
                     if (escapeXml && !specialCase) {
                         content = Utils.escapeXml(content, props, true);
                     }
-                    element.appendChild( specialCase ? document.createCDATASection(content) : document.createTextNode(content) );
+                    Text text = specialCase ? factory.cdata(content) : factory.text(content);
+                    element.addContent(text);
                 } else if (item instanceof TagNode) {
                     TagNode subTagNode = (TagNode) item;
-                    Element subelement = createElement(subTagNode, document);
+                    Element subelement = createElement(subTagNode);
 
                     setAttributes(subTagNode, subelement);
 
                     // recursively create subnodes
-                    createSubnodes(document, subelement, subTagNode.getChildren());
+                    createSubnodes(subelement, subTagNode.getChildren());
 
-                    element.appendChild(subelement);
+                    element.addContent(subelement);
                 } else if (item instanceof List) {
                     List sublist = (List) item;
-                    createSubnodes(document, element, sublist);
+                    createSubnodes(element, sublist);
                 }
             }
         }

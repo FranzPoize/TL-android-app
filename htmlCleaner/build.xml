@@ -2,8 +2,8 @@
 
 	<description>HtmlCleaner</description>
 
-	<property name="version" value="2_1"/>
-	<property name="dir.src" value="src"/>
+	<property name="version" value="2_2"/>
+	<property name="dir.src" value="src/main/java"/>
     <property name="dir.lib" value="lib"/>
     <property name="dir.doc" value="doc"/>
     <property name="dir.dist" value="dist"/>
@@ -19,9 +19,7 @@
     <!--  sources targets -->
 	<target name="build" description="compilation of source files">
 		<mkdir dir="${dir.dist}"/>
-		<javac srcdir="${dir.src}" destdir="${dir.dist}"
-			   listfiles="on" source="1.5" target="1.5"
-			   excludes="org/htmlcleaner/Test.java">
+		<javac srcdir="${dir.src}" destdir="${dir.dist}" listfiles="on" source="1.5" target="1.5">
 			<classpath refid="classpath.compile"/>
 		</javac>
     </target>
@@ -51,7 +49,7 @@
                  nonavbar="false"
                  notree="false"
                  packagenames="org.htmlcleaner"
-                 sourcepath="src"
+                 sourcepath="${dir.src}"
                  splitindex="true"
                  use="true"
                  version="true"/>
@@ -69,7 +67,7 @@
         <zip destfile="${dir.zip}/htmlcleaner${version}-all.zip">
             <zipfileset file="${jarfile}"/>
             <zipfileset file="licence.txt"/>
-            <zipfileset dir="src" prefix="src" excludes="org/htmlcleaner/Test.java" />
+            <zipfileset dir="src" prefix="src" />
             <zipfileset dir="test" prefix="test" />
             <zipfileset dir="config" prefix="config"/>
             <zipfileset dir="doc" prefix="doc"/>

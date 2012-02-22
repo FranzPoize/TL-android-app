@@ -37,33 +37,73 @@
 
 package org.htmlcleaner;
 
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
+import java.util.*;
 
 /**
- * <p>Simple XML serializer - creates resulting XML without indenting lines.</p>
+ * <p>Compact HTML serializer - creates resulting HTML by stripping whitespaces wherever possible.</p>
  */
-public class SimpleXmlSerializer extends XmlSerializer {
+public class CompactHtmlSerializer extends HtmlSerializer {
 
-	public SimpleXmlSerializer(CleanerProperties props) {
+    private int openPreTags = 0;
+
+	public CompactHtmlSerializer(CleanerProperties props) {
 		super(props);
 	}
 
     protected void serialize(TagNode tagNode, Writer writer) throws IOException {
+        boolean isPreTag = "pre".equalsIgnoreCase(tagNode.getName());
+        if (isPreTag) {
+            openPreTags++;
+        }
+
         serializeOpenTag(tagNode, writer, false);
 
+        List tagChildren = tagNode.getChildren();
         if ( !isMinimizedTagSyntax(tagNode) ) {
-            for (Object item: tagNode.getChildren()) {
-                if ( item instanceof ContentNode) {
+            ListIterator childrenIt = tagChildren.listIterator();
+            while ( childrenIt.hasNext() ) {
+                Object item = childrenIt.next();
+                if (item instanceof ContentNode) {
                     String content = item.toString();
-                    writer.write( dontEscape(tagNode) ? content.replaceAll("]]>", "]]&gt;") : escapeXml(content) );
+                    if (openPreTags > 0) {
+                        writer.write(content);
+                    } else {
+                        boolean startsWithSpace = content.length() > 0 && Character.isWhitespace( content.charAt(0) );
+                        boolean endsWithSpace = content.length() > 1 && Character.isWhitespace( content.charAt(content.length() - 1) );
+                        content = dontEscape(tagNode) ? content.trim() : escapeText(content.trim());
+
+                        if (startsWithSpace) {
+                            writer.write(' ');
+                        }
+
+                        if (content.length() != 0) {
+                            writer.write(content);
+                            if (endsWithSpace) {
+                                writer.write(' ');
+                            }
+                        }
+
+                        if (childrenIt.hasNext()) {
+                            if ( !Utils.isWhitespaceString(childrenIt.next()) ) {
+                                writer.write("\n");
+                            }
+                            childrenIt.previous();
+                        }
+                    }
+                } else if (item instanceof CommentNode) {
+                    String content = ((CommentNode) item).getCommentedContent().trim();
+                    writer.write(content);
                 } else if (item instanceof BaseToken) {
                     ((BaseToken)item).serialize(this, writer);
                 }
             }
 
             serializeEndTag(tagNode, writer, false);
+            if (isPreTag) {
+                openPreTags--;
+            }
         }
-    }
+	}
 
 }

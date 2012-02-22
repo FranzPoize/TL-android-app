@@ -37,26 +37,35 @@
 
 package org.htmlcleaner;
 
+import java.io.IOException;
+import java.io.Writer;
 
 /**
- * <p>General HtmlCleaner runtime exception.</p>
+ * <p>HTML text token.</p>
  */
-public class HtmlCleanerException extends RuntimeException {
+public class ContentNode implements BaseToken, HtmlNode {
 
-    public HtmlCleanerException() {
-        this("HtmlCleaner expression occureed!");
+    private StringBuilder content;
+
+    public ContentNode(String content) {
+        this.content = new StringBuilder(content);
     }
 
-    public HtmlCleanerException(Throwable cause) {
-        super(cause);
+    ContentNode(char content[], int len) {
+        this.content = new StringBuilder(len + 16);
+        this.content.append(content, 0, len);
     }
 
-    public HtmlCleanerException(String message) {
-        super(message);
+    public String toString() {
+        return content.toString();
     }
 
-    public HtmlCleanerException(String message, Throwable cause) {
-        super(message, cause);
+    public StringBuilder getContent() {
+        return content;
+    }
+
+    public void serialize(Serializer serializer, Writer writer) throws IOException {
+    	writer.write( content.toString() );
     }
 
 }

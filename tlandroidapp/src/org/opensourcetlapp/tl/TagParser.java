@@ -38,7 +38,7 @@ import android.util.Log;
 
 public class TagParser {
 	private static int end = 0;
-	private static char [] charBuffer = new char[2048];
+	private static char [] charBuffer = new char[4096];
 	private static final String TAG = "TagParser";
 	private static boolean DEBUG = false;
 	
@@ -121,12 +121,32 @@ public class TagParser {
 			int startChar;
 			int endChar;
 			end = 0;
+			int bufferChar = 0;
+			
+			boolean first= false;
+			boolean jump= false;
+			
 			while (true){
-				startChar = br.read();
+				if (!jump)
+					startChar = br.read();
+				else {
+					startChar = bufferChar;
+					jump = false;
+				}
 				if (startChar == '<'){
-					charBuffer[end] = (char) startChar;
-					end++;
-					break;
+					bufferChar = br.read();
+					if(bufferChar != ' ') {
+						charBuffer[end] = (char) startChar;
+						end++;
+						first = true;
+						break;
+					} else {
+						jump = true;
+						if (bw != null) {
+							bw.write(startChar);
+							bw.write(bufferChar);
+						}
+					}
 				} 
 				else if (startChar == -1) return false;
 				else if (bw != null){
@@ -135,14 +155,25 @@ public class TagParser {
 			}
 			int count = 1;
 			while (true){
-				endChar = br.read();
+				if (!first) {
+					endChar = br.read();
+				} else {
+					endChar = bufferChar;
+					first = false;
+				}
 				charBuffer[end] = (char)endChar;
 				end++;
 				if (endChar == '>'){
-					count --;
+					if(charBuffer[end-1] != ' ') {
+						count --;
+					}
 				}
 				else if (endChar == '<'){
-					count++;
+					bufferChar = br.read();
+					if(bufferChar != ' ') {
+						count++;
+					}
+					first = true;
 				}
 				else if (endChar == -1) return false;
 				if (count == 0){

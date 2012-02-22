@@ -40,30 +40,33 @@ package org.htmlcleaner;
 import java.io.IOException;
 import java.io.Writer;
 
+import org.htmlcleaner.BaseToken;
+
 /**
- * <p>Simple XML serializer - creates resulting XML without indenting lines.</p>
+ * <p>HTML comment token.</p>
  */
-public class SimpleXmlSerializer extends XmlSerializer {
+public class CommentNode implements BaseToken, HtmlNode {
 
-	public SimpleXmlSerializer(CleanerProperties props) {
-		super(props);
-	}
+    private StringBuilder content;
 
-    protected void serialize(TagNode tagNode, Writer writer) throws IOException {
-        serializeOpenTag(tagNode, writer, false);
+    public CommentNode(String content) {
+        this.content = new StringBuilder(content);
+    }
 
-        if ( !isMinimizedTagSyntax(tagNode) ) {
-            for (Object item: tagNode.getChildren()) {
-                if ( item instanceof ContentNode) {
-                    String content = item.toString();
-                    writer.write( dontEscape(tagNode) ? content.replaceAll("]]>", "]]&gt;") : escapeXml(content) );
-                } else if (item instanceof BaseToken) {
-                    ((BaseToken)item).serialize(this, writer);
-                }
-            }
+    public String getCommentedContent() {
+        return "<!--" + content + "-->";
+    }
 
-            serializeEndTag(tagNode, writer, false);
-        }
+    public StringBuilder getContent() {
+        return content;
+    }
+
+    public String toString() {
+        return getCommentedContent();
+    }
+
+    public void serialize(Serializer serializer, Writer writer) throws IOException {
+    	writer.write( getCommentedContent() );
     }
 
 }

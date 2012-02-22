@@ -37,31 +37,30 @@
 
 package org.htmlcleaner;
 
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.util.*;
 
 /**
- * <p>Pretty XML serializer - creates resulting XML with indenting lines.</p>
+ * <p>Pretty HTML serializer - creates resulting HTML with indenting lines.</p>
  */
-public class PrettyXmlSerializer extends XmlSerializer {
+public class PrettyHtmlSerializer extends HtmlSerializer {
 
 	private static final String DEFAULT_INDENTATION_STRING = "\t";
 
     private String indentString = DEFAULT_INDENTATION_STRING;
     private List<String> indents = new ArrayList<String>();
 
-	public PrettyXmlSerializer(CleanerProperties props) {
+	public PrettyHtmlSerializer(CleanerProperties props) {
 		this(props, DEFAULT_INDENTATION_STRING);
 	}
 
-	public PrettyXmlSerializer(CleanerProperties props, String indentString) {
+	public PrettyHtmlSerializer(CleanerProperties props, String indentString) {
 		super(props);
         this.indentString = indentString;
 	}
 
 	protected void serialize(TagNode tagNode, Writer writer) throws IOException {
-		serializePrettyXml(tagNode, writer, 0);
+		serializePrettyHtml(tagNode, writer, 0, false, true);
 	}
 
 	/**
@@ -132,46 +131,81 @@ public class PrettyXmlSerializer extends XmlSerializer {
         return result.toString();
     }
 
-    protected void serializePrettyXml(TagNode tagNode, Writer writer, int level) throws IOException {
+    protected void serializePrettyHtml(TagNode tagNode, Writer writer, int level, boolean isPreserveWhitespaces, boolean isLastNewLine) throws IOException {
         List tagChildren = tagNode.getChildren();
-        boolean isHeadlessNode = Utils.isEmptyString(tagNode.getName());
+        String tagName = tagNode.getName();
+        boolean isHeadlessNode = Utils.isEmptyString(tagName);
         String indent = isHeadlessNode ? "" : getIndent(level);
 
-        writer.write(indent);
+        if (!isPreserveWhitespaces) {
+            if (!isLastNewLine) {
+                writer.write("\n");
+            }
+            writer.write(indent);
+        }
         serializeOpenTag(tagNode, writer, true);
+
+        boolean preserveWhitespaces = isPreserveWhitespaces || "pre".equalsIgnoreCase(tagName);
+
+        boolean lastWasNewLine = false;
 
         if ( !isMinimizedTagSyntax(tagNode) ) {
             String singleLine = getSingleLineOfChildren(tagChildren);
             boolean dontEscape = dontEscape(tagNode);
-            if (singleLine != null) {
-            	if ( !dontEscape(tagNode) ) {
-            		writer.write( escapeXml(singleLine) );
-            	} else {
-            		writer.write( singleLine.replaceAll("]]>", "]]&gt;") );
-            	}
+            if (!preserveWhitespaces && singleLine != null) {
+                writer.write( !dontEscape(tagNode) ? escapeText(singleLine) : singleLine );
             } else {
-                if (!isHeadlessNode) {
-            	    writer.write("\n");
-                }
-                for (Object child: tagChildren) {
+                Iterator childIterator = tagChildren.iterator();
+                while (childIterator.hasNext()) {
+                    Object child = childIterator.next();
                     if (child instanceof TagNode) {
-                        serializePrettyXml( (TagNode)child, writer, isHeadlessNode ? level : level + 1 );
+                        serializePrettyHtml((TagNode)child, writer, isHeadlessNode ? level : level + 1, preserveWhitespaces, lastWasNewLine);
+                        lastWasNewLine = false;
                     } else if (child instanceof ContentNode) {
-                        String content = dontEscape ? child.toString().replaceAll("]]>", "]]&gt;") : escapeXml(child.toString());
-                        writer.write( getIndentedText(content, isHeadlessNode ? level : level + 1) );
+                        String content = dontEscape ? child.toString() : escapeText(child.toString());
+                        if (content.length() > 0) {
+                            if (dontEscape || preserveWhitespaces) {
+                                writer.write(content);
+                            } else if (Character.isWhitespace(content.charAt(0))) {
+                                if (!lastWasNewLine) {
+                                    writer.write("\n");
+                                    lastWasNewLine = false;
+                                }
+                                if (content.trim().length() > 0) {
+                                    writer.write( getIndentedText(Utils.rtrim(content), isHeadlessNode ? level : level + 1) );
+                                } else {
+                                    lastWasNewLine = true;
+                                }
+                            } else {
+                                if (content.trim().length() > 0) {
+                                    writer.write(Utils.rtrim(content));
+                                }
+                                if (!childIterator.hasNext()) {
+                                    writer.write("\n");
+                                    lastWasNewLine = true;
+                                }
+                            }
+                        }
                     } else if (child instanceof CommentNode) {
+                        if (!lastWasNewLine && !preserveWhitespaces) {
+                            writer.write("\n");
+                            lastWasNewLine = false;
+                        }
                         CommentNode commentNode = (CommentNode) child;
                         String content = commentNode.getCommentedContent();
-                        writer.write( getIndentedText(content, isHeadlessNode ? level : level + 1) );
+                        writer.write( dontEscape ? content : getIndentedText(content, isHeadlessNode ? level : level + 1) );
                     }
                 }
             }
 
-            if (singleLine == null) {
+            if (singleLine == null && !preserveWhitespaces) {
+                if (!lastWasNewLine) {
+                    writer.write("\n");
+                }
             	writer.write(indent);
             }
 
-            serializeEndTag(tagNode, writer, true);
+            serializeEndTag(tagNode, writer, false);
         }
     }
 

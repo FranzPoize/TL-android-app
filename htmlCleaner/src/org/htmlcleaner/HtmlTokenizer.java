@@ -46,12 +46,8 @@ import java.util.*;
  * open tag tokens, end tag tokens, contents (text) and comments.
  * As soon as new item is added to token list, cleaner is invoked
  * to clean current list at the end.</p>
- *
- * Created by: Vladimir Nikic.<br>
- * Date: November, 2006
-
  */
-public class HtmlTokenizer {
+abstract public class HtmlTokenizer {
 	
 	private final static int WORKING_BUFFER_SIZE = 1024;
 
@@ -61,38 +57,66 @@ public class HtmlTokenizer {
     private transient int _pos = 0;
     private transient int _len = -1;
 
-    private transient StringBuffer _saved = new StringBuffer(512);
+    private transient char _saved[] = new char[512];
+    private transient int _savedLen = 0;
 
-    private transient boolean _isLateForDoctype = false;
     private transient DoctypeToken _docType = null;
     private transient TagToken _currentTagToken = null;
     private transient List<BaseToken> _tokenList = new ArrayList<BaseToken>();
-    private transient Set<String> _namespacePrefixes = new HashSet<String>();
-    
+
     private boolean _asExpected = true;
 
     private boolean _isScriptContext = false;
 
-    private HtmlCleaner cleaner;
     private CleanerProperties props;
+
+    private boolean isOmitUnknownTags;
+    private boolean isTreatUnknownTagsAsContent;
+    private boolean isOmitDeprecatedTags;
+    private boolean isTreatDeprecatedTagsAsContent;
+    private boolean isNamespacesAware;
+    private boolean isOmitComments;
+    private boolean isAllowMultiWordAttributes;
+    private boolean isAllowHtmlInsideAttributes;
+
     private CleanerTransformations transformations;
+    private ITagInfoProvider tagInfoProvider;
+
+    private StringBuilder commonStr = new StringBuilder();
 
     /**
      * Constructor - cretes instance of the parser with specified content.
-     * @param cleaner
+     * 
+     * @param reader
+     * @param props
+     * @param transformations
+     * @param tagInfoProvider
+     * 
      * @throws IOException
      */
-    public HtmlTokenizer(HtmlCleaner cleaner, Reader reader) throws IOException {
+    public HtmlTokenizer(Reader reader, CleanerProperties props, CleanerTransformations transformations, ITagInfoProvider tagInfoProvider) throws IOException {
         this._reader = new BufferedReader(reader);
-        this.cleaner = cleaner;
-        this.props = cleaner.getProperties();
-        this.transformations = cleaner.getTransformations();
+        this.props = props;
+        this.isOmitUnknownTags = props.isOmitUnknownTags();
+        this.isTreatUnknownTagsAsContent = props.isTreatUnknownTagsAsContent();
+        this.isOmitDeprecatedTags = props.isOmitDeprecatedTags();
+        this.isTreatDeprecatedTagsAsContent = props.isTreatDeprecatedTagsAsContent();
+        this.isNamespacesAware = props.isNamespacesAware();
+        this.isOmitComments = props.isOmitComments();
+        this.isAllowMultiWordAttributes = props.isAllowMultiWordAttributes();
+        this.isAllowHtmlInsideAttributes = props.isAllowHtmlInsideAttributes();
+        this.transformations = transformations;
+        this.tagInfoProvider = tagInfoProvider;
     }
 
     private void addToken(BaseToken token) {
         _tokenList.add(token);
-        cleaner.makeTree( _tokenList, _tokenList.listIterator(_tokenList.size() - 1) );
+        makeTree(_tokenList);
     }
+
+    abstract void makeTree(List<BaseToken> tokenList);
+
+    abstract TagNode createTagNode(String name);
 
     private void readIfNeeded(int neededChars) throws IOException {
         if (_len == -1 && _pos + neededChars >= WORKING_BUFFER_SIZE) {
@@ -102,7 +126,7 @@ public class HtmlTokenizer {
 
             int expected = WORKING_BUFFER_SIZE - numToCopy;
             int size = 0;
-            int charsRead = 0;
+            int charsRead;
             int offset = numToCopy;
             do {
                 charsRead = _reader.read(_working, offset, expected);
@@ -129,10 +153,6 @@ public class HtmlTokenizer {
 
     List<BaseToken> getTokenList() {
     	return this._tokenList;
-    }
-
-    Set<String> getNamespacePrefixes() {
-        return _namespacePrefixes;
     }
 
     private void go() throws IOException {
@@ -169,6 +189,22 @@ public class HtmlTokenizer {
         return true;
     }
 
+    private boolean startsWithSimple(String value) throws IOException {
+        int valueLen = value.length();
+        readIfNeeded(valueLen);
+        if (_len >= 0 && _pos + valueLen  > _len) {
+            return false;
+        }
+
+        for (int i = 0; i < valueLen; i++) {
+        	if (value.charAt(i) != _working[_pos + i]) {
+        		return false;
+        	}
+        }
+
+        return true;
+    }
+
     /**
      * Checks if character at specified position is whitespace.
      * @param position
@@ -188,6 +224,10 @@ public class HtmlTokenizer {
      */
     private boolean isWhitespace() {
         return isWhitespace(_pos);
+    }
+
+    private boolean isWhitespaceSafe() {
+        return Character.isWhitespace( _working[_pos] );
     }
 
     /**
@@ -213,6 +253,22 @@ public class HtmlTokenizer {
         return isChar(_pos, ch);
     }
 
+    private boolean isCharSimple(char ch) {
+        return (_len < 0 || _pos < _len) && (ch == _working[_pos]);
+    }
+
+    /**
+     * @return Current character to be read, but first it must be checked if it exists.
+     * This method is made for performance reasons to be used instead of isChar(...).
+     */
+    private char getCurrentChar() {
+        return _working[_pos];
+    }
+
+    private boolean isCharEquals(char ch) {
+        return _working[_pos] == ch;
+    }
+
     /**
      * Checks if character at specified position can be identifier start.
      * @param position
@@ -224,7 +280,7 @@ public class HtmlTokenizer {
         }
 
         char ch = _working[position];
-        return Character.isUnicodeIdentifierStart(ch);
+        return Character.isUnicodeIdentifierStart(ch) || ch == '_';
     }
 
     /**
@@ -248,6 +304,14 @@ public class HtmlTokenizer {
         return Character.isUnicodeIdentifierStart(ch) || Character.isDigit(ch) || Utils.isIdentifierHelperChar(ch);
     }
 
+    private boolean isValidXmlChar() {
+        return isAllRead() || Utils.isValidXmlChar(_working[_pos]);
+    }
+
+    private boolean isValidXmlCharSafe() {
+        return Utils.isValidXmlChar(_working[_pos]);
+    }
+
     /**
      * Checks if end of the content is reached.
      */
@@ -260,7 +324,12 @@ public class HtmlTokenizer {
      * @param ch
      */
     private void save(char ch) {
-        _saved.append(ch);
+        if (_savedLen >= _saved.length) {
+            char newSaved[] = new char[_saved.length + 512];
+            System.arraycopy(_saved, 0, newSaved, 0, _saved.length);
+            _saved = newSaved;
+        }
+        _saved[_savedLen++] = ch;
     }
 
     /**
@@ -270,6 +339,10 @@ public class HtmlTokenizer {
         if (!isAllRead()) {
             save( _working[_pos] );
         }
+    }
+
+    private void saveCurrentSafe() {
+        save( _working[_pos] );
     }
 
     /**
@@ -292,16 +365,16 @@ public class HtmlTokenizer {
      * @throws IOException
      */
     private void skipWhitespaces() throws IOException {
-        while ( !isAllRead() && isWhitespace() ) {
-            saveCurrent();
+        while ( !isAllRead() && isWhitespaceSafe() ) {
+            saveCurrentSafe();
             go();
         }
     }
 
     private boolean addSavedAsContent() {
-        if (_saved.length() > 0) {
-            addToken( new ContentToken(_saved.toString()) );
-            _saved.delete(0, _saved.length());
+        if (_savedLen > 0) {
+            addToken(new ContentNode(_saved, _savedLen));
+            _savedLen = 0;
             return true;
         }
 
@@ -318,8 +391,8 @@ public class HtmlTokenizer {
         _tokenList.clear();
         _asExpected = true;
         _isScriptContext = false;
-        _isLateForDoctype = false;
-        _namespacePrefixes.clear();
+
+        boolean isLateForDoctype = false;
 
         this._pos = WORKING_BUFFER_SIZE;
         readIfNeeded(0);
@@ -328,7 +401,7 @@ public class HtmlTokenizer {
 
         while ( !isAllRead() ) {
             // resets all the runtime values
-            _saved.delete(0, _saved.length());
+            _savedLen = 0;
             _currentTagToken = null;
             _asExpected = true;
 
@@ -338,13 +411,12 @@ public class HtmlTokenizer {
             if (_isScriptContext) {
                 if ( startsWith("</script") && (isWhitespace(_pos + 8) || isChar(_pos + 8, '>')) ) {
                     tagEnd();
-                } else if ( isScriptEmpty && startsWith("<!--") ) {
+                } else if ( isScriptEmpty && startsWithSimple("<!--") ) {
                     comment();
                 } else {
                     boolean isTokenAdded = content();
-                    
                     if (isScriptEmpty && isTokenAdded) {
-                        final BaseToken lastToken = (BaseToken) _tokenList.get(_tokenList.size() - 1);
+                        final BaseToken lastToken = _tokenList.get(_tokenList.size() - 1);
                         if (lastToken != null) {
                             final String lastTokenAsString = lastToken.toString();
                             if (lastTokenAsString != null && lastTokenAsString.trim().length() > 0) {
@@ -358,23 +430,23 @@ public class HtmlTokenizer {
                 }
             } else {
                 if ( startsWith("<!doctype") ) {
-                	if ( !_isLateForDoctype ) {
+                	if ( !isLateForDoctype ) {
                 		doctype();
-                		_isLateForDoctype = true;
+                		isLateForDoctype = true;
                 	} else {
                 		ignoreUntil('<');
                 	}
-                } else if ( startsWith("</") && isIdentifierStartChar(_pos + 2) ) {
-                	_isLateForDoctype = true;
+                } else if ( startsWithSimple("</") && isIdentifierStartChar(_pos + 2) ) {
+                	isLateForDoctype = true;
                     tagEnd();
-                } else if ( startsWith("<!--") ) {
+                } else if ( startsWithSimple("<!--") ) {
                     comment();
-                } else if ( startsWith("<") && isIdentifierStartChar(_pos + 1) ) {
-                	_isLateForDoctype = true;
+                } else if ( startsWithSimple("<") && isIdentifierStartChar(_pos + 1) ) {
+                	isLateForDoctype = true;
                     tagStart();
-                } else if ( props.isIgnoreQuestAndExclam() && (startsWith("<!") || startsWith("<?")) ) {
+                } else if ( props.isIgnoreQuestAndExclam() && (startsWithSimple("<!") || startsWithSimple("<?")) ) {
                     ignoreUntil('>');
-                    if (isChar('>')) {
+                    if (isCharSimple('>')) {
                         go();
                     }
                 } else {
@@ -392,7 +464,8 @@ public class HtmlTokenizer {
      * @return
      */
     private boolean isReservedTag(String tagName) {
-        return "html".equalsIgnoreCase(tagName) || "head".equalsIgnoreCase(tagName) || "body".equalsIgnoreCase(tagName);
+        tagName = tagName.toLowerCase();
+        return "html".equals(tagName) || "head".equals(tagName) || "body".equals(tagName);
     }
 
     /**
@@ -420,16 +493,15 @@ public class HtmlTokenizer {
         }
 
         if (tagName != null) {
-            ITagInfoProvider tagInfoProvider = cleaner.getTagInfoProvider();
             TagInfo tagInfo = tagInfoProvider.getTagInfo(tagName);
-            if ( (tagInfo == null && !props.isOmitUnknownTags() && props.isTreatUnknownTagsAsContent() && !isReservedTag(tagName)) ||
-                 (tagInfo != null && tagInfo.isDeprecated() && !props.isOmitDeprecatedTags() && props.isTreatDeprecatedTagsAsContent()) ) {
+            if ( (tagInfo == null && !isOmitUnknownTags && isTreatUnknownTagsAsContent && !isReservedTag(tagName)) ||
+                 (tagInfo != null && tagInfo.isDeprecated() && !isOmitDeprecatedTags && isTreatDeprecatedTagsAsContent) ) {
                 content();
                 return;
             }
         }
 
-        TagNode tagNode = new TagNode(tagName, cleaner);
+        TagNode tagNode = createTagNode(tagName);
         _currentTagToken = tagNode;
 
         if (_asExpected) {
@@ -442,14 +514,17 @@ public class HtmlTokenizer {
                 }
                 addToken(_currentTagToken);
             }
-            
-            if ( isChar('>') ) {
+
+            if ( isCharSimple('>') ) {
             	go();
                 if ( "script".equalsIgnoreCase(tagName) ) {
                     _isScriptContext = true;
                 }
-            } else if ( startsWith("/>") ) {
+            } else if ( startsWithSimple("/>") ) {
             	go(2);
+                if ( "script".equalsIgnoreCase(tagName) ) {
+                    addToken( new EndTagToken(tagName) );
+                }
             }
 
             _currentTagToken = null;
@@ -482,10 +557,9 @@ public class HtmlTokenizer {
         }
 
         if (tagName != null) {
-            ITagInfoProvider tagInfoProvider = cleaner.getTagInfoProvider();
             TagInfo tagInfo = tagInfoProvider.getTagInfo(tagName);
-            if ( (tagInfo == null && !props.isOmitUnknownTags() && props.isTreatUnknownTagsAsContent() && !isReservedTag(tagName)) ||
-                 (tagInfo != null && tagInfo.isDeprecated() && !props.isOmitDeprecatedTags() && props.isTreatDeprecatedTagsAsContent()) ) {
+            if ( (tagInfo == null && !isOmitUnknownTags && isTreatUnknownTagsAsContent && !isReservedTag(tagName)) ||
+                 (tagInfo != null && tagInfo.isDeprecated() && !isOmitDeprecatedTags && isTreatDeprecatedTagsAsContent) ) {
                 content();
                 return;
             }
@@ -501,7 +575,7 @@ public class HtmlTokenizer {
                 addToken(_currentTagToken);
             }
 
-            if ( isChar('>') ) {
+            if ( isCharSimple('>') ) {
             	go();
             }
 
@@ -527,25 +601,24 @@ public class HtmlTokenizer {
             return null;
         }
 
-        StringBuffer identifierValue = new StringBuffer();
+        commonStr.delete(0, commonStr.length());
 
         while ( !isAllRead() && isIdentifierChar() ) {
-        	
-            saveCurrent();
-           	identifierValue.append( _working[_pos] );
+            saveCurrentSafe();
+            commonStr.append( _working[_pos] );
             go();
         }
-        
+
         // strip invalid characters from the end
-        while ( identifierValue.length() > 0 && Utils.isIdentifierHelperChar(identifierValue.charAt(identifierValue.length() - 1)) ) {
-            identifierValue.deleteCharAt( identifierValue.length() - 1 );
+        while ( commonStr.length() > 0 && Utils.isIdentifierHelperChar(commonStr.charAt(commonStr.length() - 1)) ) {
+            commonStr.deleteCharAt( commonStr.length() - 1 );
         }
 
-        if ( identifierValue.length() == 0 ) {
+        if ( commonStr.length() == 0 ) {
             return null;
         }
 
-        String id = identifierValue.toString();
+        String id = commonStr.toString();
 
         int columnIndex = id.indexOf(':');
         if (columnIndex >= 0) {
@@ -555,516 +628,43 @@ public class HtmlTokenizer {
             if (nextColumnIndex >= 0) {
                 suffix = suffix.substring(0, nextColumnIndex);
             }
-            if (props.isNamespacesAware()) {
-                id = prefix + ":" + suffix;
-                if ( !"xmlns".equalsIgnoreCase(prefix) ) {
-                    _namespacePrefixes.add( prefix.toLowerCase() );
-                }
-            } else {
-                id = suffix;
-            }
+            id = isNamespacesAware ? (prefix + ":" + suffix) : suffix;
         }
 
         return id;
     }
 
-
-    /**
-     * Parses an identifier from the current position.
-     * @throws IOException
-     */
-    private String attrIdentifier() throws IOException {
-        _asExpected = true;
-        int idState = 0;
-        if ( !isIdentifierStartChar() ) {
-            _asExpected = false;
-            return null;
-        }
-
-        StringBuffer identifierValue = new StringBuffer();
-
-        while ( !isAllRead() && isIdentifierChar() ) {
-        	
-            saveCurrent();
-            switch(idState) {
-            case 0: // 
-            	switch( _working[_pos] ) {
-/****** DFA CONTENTS START ********/            	
-            		case 'a':	// a
-            		case 'A':
-            			idState = 1; break;
-            		case 'c':	// c
-            		case 'C':
-            			idState = 4; break;
-            		case 'd':	// d
-            		case 'D':
-            			idState = 9; break;
-            		case 'h':	// h
-            		case 'H':
-            			idState = 13; break;
-            		case 'i':	// i
-            		case 'I':
-            			idState = 17; break;
-            		case 'n':	// n
-            		case 'N':
-            			idState = 19; break;
-            		case 'o':	// o
-            		case 'O':
-            			idState = 23; break;
-            		case 's':	// s
-            		case 'S':
-            			idState = 30; break;
-            		case 'v':	// v
-            		case 'V':
-            			idState = 40; break;
-            		case 'w':	// w
-            		case 'W':
-            			idState = 45; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 1: // a
-            	switch( _working[_pos] ) {
-            		case 'l':	// al
-            		case 'L':
-            			idState = 2; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 2: // al
-            	switch( _working[_pos] ) {
-            		case 't':	// alt
-            		case 'T':
-            			idState = 3; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 3: // alt
-            	switch( _working[_pos] ) {
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 4: // c
-            	switch( _working[_pos] ) {
-            		case 'l':	// cl
-            		case 'L':
-            			idState = 5; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 5: // cl
-            	switch( _working[_pos] ) {
-            		case 'a':	// cla
-            		case 'A':
-            			idState = 6; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 6: // cla
-            	switch( _working[_pos] ) {
-            		case 's':	// clas
-            		case 'S':
-            			idState = 7; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 7: // clas
-            	switch( _working[_pos] ) {
-            		case 's':	// class
-            		case 'S':
-            			idState = 8; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 8: // class
-            	switch( _working[_pos] ) {
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 9: // d
-            	switch( _working[_pos] ) {
-            		case 'a':	// da
-            		case 'A':
-            			idState = 10; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 10: // da
-            	switch( _working[_pos] ) {
-            		case 't':	// dat
-            		case 'T':
-            			idState = 11; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 11: // dat
-            	switch( _working[_pos] ) {
-            		case 'a':	// data
-            		case 'A':
-            			idState = 12; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 12: // data
-            	switch( _working[_pos] ) {
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 13: // h
-            	switch( _working[_pos] ) {
-            		case 'r':	// hr
-            		case 'R':
-            			idState = 14; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 14: // hr
-            	switch( _working[_pos] ) {
-            		case 'e':	// hre
-            		case 'E':
-            			idState = 15; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 15: // hre
-            	switch( _working[_pos] ) {
-            		case 'f':	// href
-            		case 'F':
-            			idState = 16; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 16: // href
-            	switch( _working[_pos] ) {
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 17: // i
-            	switch( _working[_pos] ) {
-            		case 'd':	// id
-            		case 'D':
-            			idState = 18; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 18: // id
-            	switch( _working[_pos] ) {
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 19: // n
-            	switch( _working[_pos] ) {
-            		case 'a':	// na
-            		case 'A':
-            			idState = 20; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 20: // na
-            	switch( _working[_pos] ) {
-            		case 'm':	// nam
-            		case 'M':
-            			idState = 21; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 21: // nam
-            	switch( _working[_pos] ) {
-            		case 'e':	// name
-            		case 'E':
-            			idState = 22; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 22: // name
-            	switch( _working[_pos] ) {
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 23: // o
-            	switch( _working[_pos] ) {
-            		case 'n':	// on
-            		case 'N':
-            			idState = 24; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 24: // on
-            	switch( _working[_pos] ) {
-            		case 'c':	// onc
-            		case 'C':
-            			idState = 25; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 25: // onc
-            	switch( _working[_pos] ) {
-            		case 'l':	// oncl
-            		case 'L':
-            			idState = 26; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 26: // oncl
-            	switch( _working[_pos] ) {
-            		case 'i':	// oncli
-            		case 'I':
-            			idState = 27; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 27: // oncli
-            	switch( _working[_pos] ) {
-            		case 'c':	// onclic
-            		case 'C':
-            			idState = 28; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 28: // onclic
-            	switch( _working[_pos] ) {
-            		case 'k':	// onclick
-            		case 'K':
-            			idState = 29; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 29: // onclick
-            	switch( _working[_pos] ) {
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 30: // s
-            	switch( _working[_pos] ) {
-            		case 'i':	// si
-            		case 'I':
-            			idState = 31; break;
-            		case 'r':	// sr
-            		case 'R':
-            			idState = 34; break;
-            		case 't':	// st
-            		case 'T':
-            			idState = 36; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 31: // si
-            	switch( _working[_pos] ) {
-            		case 'z':	// siz
-            		case 'Z':
-            			idState = 32; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 32: // siz
-            	switch( _working[_pos] ) {
-            		case 'e':	// size
-            		case 'E':
-            			idState = 33; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 33: // size
-            	switch( _working[_pos] ) {
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 34: // sr
-            	switch( _working[_pos] ) {
-            		case 'c':	// src
-            		case 'C':
-            			idState = 35; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 35: // src
-            	switch( _working[_pos] ) {
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 36: // st
-            	switch( _working[_pos] ) {
-            		case 'y':	// sty
-            		case 'Y':
-            			idState = 37; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 37: // sty
-            	switch( _working[_pos] ) {
-            		case 'l':	// styl
-            		case 'L':
-            			idState = 38; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 38: // styl
-            	switch( _working[_pos] ) {
-            		case 'e':	// style
-            		case 'E':
-            			idState = 39; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 39: // style
-            	switch( _working[_pos] ) {
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 40: // v
-            	switch( _working[_pos] ) {
-            		case 'a':	// va
-            		case 'A':
-            			idState = 41; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 41: // va
-            	switch( _working[_pos] ) {
-            		case 'l':	// val
-            		case 'L':
-            			idState = 42; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 42: // val
-            	switch( _working[_pos] ) {
-            		case 'u':	// valu
-            		case 'U':
-            			idState = 43; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 43: // valu
-            	switch( _working[_pos] ) {
-            		case 'e':	// value
-            		case 'E':
-            			idState = 44; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 44: // value
-            	switch( _working[_pos] ) {
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 45: // w
-            	switch( _working[_pos] ) {
-            		case 'i':	// wi
-            		case 'I':
-            			idState = 46; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 46: // wi
-            	switch( _working[_pos] ) {
-            		case 'd':	// wid
-            		case 'D':
-            			idState = 47; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 47: // wid
-            	switch( _working[_pos] ) {
-            		case 't':	// widt
-            		case 'T':
-            			idState = 48; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 48: // widt
-            	switch( _working[_pos] ) {
-            		case 'h':	// width
-            		case 'H':
-            			idState = 49; break;
-            		default:
-            			idState = -1; break;
-            	} break;
-            case 49: // width
-            	switch( _working[_pos] ) {
-            		default:
-            			idState = -1; break;
-            	} break;
-/****** DFA CONTENTS ENDS ********/
-        case -1:
-        		break;
-        }
-            
-            if(idState != -1) {
-            	identifierValue.append( _working[_pos] );
-            } 
-            go();
-        }
-        if(idState == -1) {
-        	return null;
-        }
-        // strip invalid characters from the end
-        while ( identifierValue.length() > 0 && Utils.isIdentifierHelperChar(identifierValue.charAt(identifierValue.length() - 1)) ) {
-            identifierValue.deleteCharAt( identifierValue.length() - 1 );
-        }
-
-        if ( identifierValue.length() == 0 ) {
-            return null;
-        }
-
-        String id = identifierValue.toString();
-
-        int columnIndex = id.indexOf(':');
-        if (columnIndex >= 0) {
-            String prefix = id.substring(0, columnIndex);
-            String suffix = id.substring(columnIndex + 1);
-            int nextColumnIndex = suffix.indexOf(':');
-            if (nextColumnIndex >= 0) {
-                suffix = suffix.substring(0, nextColumnIndex);
-            }
-            if (props.isNamespacesAware()) {
-                id = prefix + ":" + suffix;
-                if ( !"xmlns".equalsIgnoreCase(prefix) ) {
-                    _namespacePrefixes.add( prefix.toLowerCase() );
-                }
-            } else {
-                id = suffix;
-            }
-        }
-
-        return id;
-    }
-
-    
     /**
      * Parses list tag attributes from the current position.
      * @throws IOException
      */
     private void tagAttributes() throws IOException {
-        while( !isAllRead() && _asExpected && !isChar('>') && !startsWith("/>") ) {
-        	
+        while( !isAllRead() && _asExpected && !isCharSimple('>') && !startsWithSimple("/>") ) {
             skipWhitespaces();
-            String attName = attrIdentifier();
+            String attName = identifier();
 
             if (!_asExpected) {
-                if ( !isChar('<') && !isChar('>') && !startsWith("/>") ) {
-                    saveCurrent();
+                if ( !isCharSimple('<') && !isCharSimple('>') && !startsWithSimple("/>") ) {
+                    if (isValidXmlChar()) {
+                        saveCurrent();
+                    }
                     go();
                 }
 
-                if (!isChar('<')) {
+                if (!isCharSimple('<')) {
                     _asExpected = true;
                 }
 
                 continue;
             }
 
-            String attValue = "";
+            String attValue;
 
             skipWhitespaces();
-            if ( isChar('=') ) {
-                saveCurrent();
+            if ( isCharSimple('=') ) {
+                saveCurrentSafe();
                 go();
-                if(attName != null) {
-                	attValue = attributeValue();
-                } else {
-                	skipAttributeValue();
-                }
+                attValue = attributeValue();
             } else if (CleanerProperties.BOOL_ATT_EMPTY.equals(props.booleanAttributeValues)) {
                 attValue = "";
             } else if (CleanerProperties.BOOL_ATT_TRUE.equals(props.booleanAttributeValues)) {
@@ -1073,10 +673,9 @@ public class HtmlTokenizer {
                 attValue = attName;
             }
 
-            if (_asExpected && attName != null) {
-                _currentTagToken.addAttribute(attName, attValue);
+            if (_asExpected) {
+                _currentTagToken.setAttribute(attName, attValue);
             }
-            
         }
     }
 
@@ -1091,113 +690,57 @@ public class HtmlTokenizer {
     private String attributeValue() throws IOException {
         skipWhitespaces();
         
-        if ( isChar('<') || isChar('>') || startsWith("/>") ) {
+        if ( isCharSimple('<') || isCharSimple('>') || startsWithSimple("/>") ) {
         	return "";
         }
 
         boolean isQuoteMode = false;
         boolean isAposMode = false;
 
-        StringBuffer result = new StringBuffer();
+        commonStr.delete(0, commonStr.length());
 
-        if ( isChar('\'') ) {
+        if ( isCharSimple('\'') ) {
             isAposMode = true;
-            saveCurrent();
+            saveCurrentSafe();
             go();
-        } else if ( isChar('\"') ) {
+        } else if ( isCharSimple('\"') ) {
             isQuoteMode = true;
-            saveCurrent();
+            saveCurrentSafe();
             go();
         }
-
-        boolean isMultiWord = props.isAllowMultiWordAttributes();
-
-        boolean allowHtml = props.isAllowHtmlInsideAttributes();
 
         while ( !isAllRead() &&
-                ( (isAposMode && !isChar('\'') && (allowHtml || !isChar('>') && !isChar('<')) && (isMultiWord || !isWhitespace())) ||
-                  (isQuoteMode && !isChar('\"') && (allowHtml || !isChar('>') && !isChar('<')) && (isMultiWord || !isWhitespace())) ||
-                  (!isAposMode && !isQuoteMode && !isWhitespace() && !isChar('>') && !isChar('<'))
+                ( ((isAposMode && !isCharEquals('\'') || isQuoteMode && !isCharEquals('\"')) && (isAllowHtmlInsideAttributes || !isCharEquals('>') && !isCharEquals('<')) && (isAllowMultiWordAttributes || !isWhitespaceSafe())) ||
+                  (!isAposMode && !isQuoteMode && !isWhitespaceSafe() && !isCharEquals('>') && !isCharEquals('<'))
                 )
               ) {
-            result.append( _working[_pos] );
-            saveCurrent();
+            if (isValidXmlCharSafe()) {
+                commonStr.append( _working[_pos] );
+                saveCurrentSafe();
+            }
             go();
         }
 
-        if ( isChar('\'') && isAposMode ) {
-            saveCurrent();
+        if ( isCharSimple('\'') && isAposMode ) {
+            saveCurrentSafe();
             go();
-        } else if ( isChar('\"') && isQuoteMode ) {
-            saveCurrent();
+        } else if ( isCharSimple('\"') && isQuoteMode ) {
+            saveCurrentSafe();
             go();
         }
 
 
-        return result.toString();
+        return commonStr.toString();
     }
 
-    /**
-     * Parses a single tag attribute - it is expected to be in one of the forms:
-     * 		name=value
-     * 		name="value"
-     * 		name='value'
-     * 		name
-     * @throws IOException
-     */
-    private void skipAttributeValue() throws IOException {
-        skipWhitespaces();
-        
-        if ( isChar('<') || isChar('>') || startsWith("/>") ) {
-        	return;
-        }
-
-        boolean isQuoteMode = false;
-        boolean isAposMode = false;
-
-        if ( isChar('\'') ) {
-            isAposMode = true;
-            saveCurrent();
-            go();
-        } else if ( isChar('\"') ) {
-            isQuoteMode = true;
-            saveCurrent();
-            go();
-        }
-
-        boolean isMultiWord = props.isAllowMultiWordAttributes();
-
-        boolean allowHtml = props.isAllowHtmlInsideAttributes();
-
-        while ( !isAllRead() &&
-                ( (isAposMode && !isChar('\'') && (allowHtml || !isChar('>') && !isChar('<')) && (isMultiWord || !isWhitespace())) ||
-                  (isQuoteMode && !isChar('\"') && (allowHtml || !isChar('>') && !isChar('<')) && (isMultiWord || !isWhitespace())) ||
-                  (!isAposMode && !isQuoteMode && !isWhitespace() && !isChar('>') && !isChar('<'))
-                )
-              ) {
-            
-            saveCurrent();
-            go();
-        }
-
-        if ( isChar('\'') && isAposMode ) {
-            saveCurrent();
-            go();
-        } else if ( isChar('\"') && isQuoteMode ) {
-            saveCurrent();
-            go();
-        }
-
-
-        return;
-    }
-    
     private boolean content() throws IOException {
         while ( !isAllRead() ) {
-            saveCurrent();
+            if (isValidXmlCharSafe()) {
+                saveCurrentSafe();
+            }
             go();
 
-            if ( isChar('<') ) {
+            if ( isCharSimple('<') ) {
                 break;
             }
         }
@@ -1216,19 +759,21 @@ public class HtmlTokenizer {
 
     private void comment() throws IOException {
     	go(4);
-        while ( !isAllRead() && !startsWith("-->") ) {
-            saveCurrent();
+        while ( !isAllRead() && !startsWithSimple("-->") ) {
+            if (isValidXmlCharSafe()) {
+                saveCurrentSafe();
+            }
             go();
         }
 
-        if (startsWith("-->")) {
+        if (startsWithSimple("-->")) {
         	go(3);
         }
 
-        if (_saved.length() > 0) {
-            if ( !props.isOmitComments() ) {
+        if (_savedLen > 0) {
+            if (!isOmitComments) {
                 String hyphenRepl = props.getHyphenReplacementInComment();
-                String comment = _saved.toString().replaceAll("--", hyphenRepl + hyphenRepl);
+                String comment = new String(_saved, 0, _savedLen).replaceAll("--", hyphenRepl + hyphenRepl);
 
         		if ( comment.length() > 0 && comment.charAt(0) == '-' ) {
         			comment = hyphenRepl + comment.substring(1);
@@ -1238,9 +783,9 @@ public class HtmlTokenizer {
         			comment = comment.substring(0, len - 1) + hyphenRepl;
         		}
 
-        		addToken( new CommentToken(comment) );
+        		addToken( new CommentNode(comment) );
         	}
-            _saved.delete(0, _saved.length());
+            _savedLen = 0;
         }
     }
     
