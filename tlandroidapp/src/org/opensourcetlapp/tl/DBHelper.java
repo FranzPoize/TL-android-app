@@ -91,7 +91,7 @@ public class DBHelper {
 	
 	private class OpenHelper extends SQLiteOpenHelper {
 		private static final String DATABASE_NAME = "teamliquid";
-		private static final int DATABASE_VERSION = 5;
+		private static final int DATABASE_VERSION = 6;
 
 		private static final String CREATE_FORUMS_TABLE = "CREATE TABLE forums (_id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, url TEXT,hidden INTEGER,subforum INTEGER);";
 		private static final String CREATE_USER_TABLE = "CREATE TABLE user (username TEXT, password TEXT, valid INTEGER)";
@@ -109,6 +109,7 @@ public class DBHelper {
 		@Override
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 			String sql = "ALTER TABLE forums add subforum INTEGER";
+			clear();
 			db.execSQL(sql);
 		}
 	}

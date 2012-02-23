@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="org.opensourcetlapp.tl"
-      android:versionCode="38"
+      android:versionCode="40"
       android:versionName="BETA 0.3.27">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-sdk android:minSdkVersion="3" android:targetSdkVersion="9"/>

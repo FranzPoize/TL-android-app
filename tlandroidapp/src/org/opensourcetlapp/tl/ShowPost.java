@@ -236,7 +236,7 @@ public class ShowPost extends Activity implements Runnable {
 				 forumTagNode = (TagNode) forum[0];
 			}	
 			Object [] postContents = forumTagNode.evaluateXPath(POST_CONTENT_XPATH);
-			int offset = ((TagNode)postContents[postContents.length-1]).evaluateXPath("//form[@name='theform']").length > 0 ? 1 : 0;
+			int offset = ((TagNode)postContents[postContents.length-1]).evaluateXPath("//form[@name='theform']").length > 0 ? 1 : 1;
 			TagNode [] posts = new TagNode[postContents.length - offset];
 			TagNode [] postHeaders = new TagNode[postContents.length - offset];
 			int [] postContentType = new int[postContents.length - offset];
