@@ -81,11 +81,14 @@ public class ShowMyPMReply extends Activity implements Runnable {
 		
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
-			replyURL = extras.getString("replyURL");	
+			replyURL = extras.getString("replyURL");
+			to = extras.getString("to");
 		}
 		
 		editText = (EditText)findViewById(R.id.messageEditText);
 		toEditText = (EditText)findViewById(R.id.toEditText);
+		if (to != null)
+			toEditText.setText(to);
 		subjectEditText = (EditText)findViewById(R.id.subjectEditText);
 		
 		findViewById(R.id.replyButton).setOnClickListener(new OnClickListener() {		

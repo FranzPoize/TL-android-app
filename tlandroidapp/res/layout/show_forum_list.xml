@@ -4,5 +4,4 @@
 	android:drawSelectorOnTop="false"
 	android:divider="@color/TLdivider"
 	android:dividerHeight="1px"
-	android:background = "@color/TLBlue"
-	 />
+	android:background = "@color/TLBlue"/>

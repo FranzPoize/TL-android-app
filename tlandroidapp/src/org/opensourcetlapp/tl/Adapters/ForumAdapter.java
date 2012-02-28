@@ -38,7 +38,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 
 public class ForumAdapter extends BaseAdapter{
@@ -46,20 +48,22 @@ public class ForumAdapter extends BaseAdapter{
 		public TextView topic;
 		public TextView topicStarter;
 		public TextView replies;
-		public TextView image;
+		public LinearLayout typeLine;
 	}
 	
 	private LayoutInflater mInflater;
 
 	private List <PostInfo>postInfoList;
 	private Context context;
+	private CustomImageGetter imgGetter;
 	
 	private static final String TAG = "ForumAdapter";
 	
-	public ForumAdapter(List <PostInfo>postInfoList, Context context){
+	public ForumAdapter(List <PostInfo>postInfoList, Context context,ListView view){
 		this.postInfoList = postInfoList;
 		this.context = context;
 		mInflater = LayoutInflater.from(context);
+		imgGetter = new CustomImageGetter(view, context);
 	}
 	
 	@Override
@@ -88,10 +92,10 @@ public class ForumAdapter extends BaseAdapter{
 			convertView = mInflater.inflate(R.layout.forum_row, null);
 			
 			holder = new ViewHolder();
+			holder.typeLine = (LinearLayout)convertView.findViewById(R.id.typeLine);
 			holder.topic = (TextView)convertView.findViewById(R.id.topic);
 			holder.topicStarter = (TextView)convertView.findViewById(R.id.topicStarter);
 			holder.replies = (TextView)convertView.findViewById(R.id.replies);
-			holder.image = (TextView)convertView.findViewById(R.id.image);
 			
 			convertView.setTag(holder);
 		}
@@ -101,10 +105,18 @@ public class ForumAdapter extends BaseAdapter{
 		
 		PostInfo postInfo = postInfoList.get(position);
 
+		if(postInfo.imageString.equals("/images/hot.png")) {
+			holder.typeLine.setBackgroundResource(R.color.hotTopic);
+		} else if (postInfo.imageString.equals("/images/regular.png")) {
+			holder.typeLine.setBackgroundResource(R.color.regularTopic);
+		} else if (postInfo.imageString.equals("/images/sticky.png")) {
+			holder.typeLine.setBackgroundResource(R.color.stickyTopic);
+		} else {
+			holder.typeLine.setBackgroundResource(R.color.unknownTopic);
+		}
 		holder.topic.setText(postInfo.topicString);
 		holder.topicStarter.setText(postInfo.topicStarterString);
-		holder.replies.setText(postInfo.repliesString);	
-		holder.image.setText(Html.fromHtml(postInfo.imageString, new CustomImageGetter(context), null));
+		holder.replies.setText(postInfo.repliesString);
 
 		return convertView;
 	}

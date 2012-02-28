@@ -5,9 +5,13 @@
 	<color name="TLBlue4">#6280A0</color>
 	<color name="TLBlue3">#325080</color>
 	<color name="TLBlueBlack">#00005d</color>
-	<color name="TLdivider">#7575a3</color>
+	<color name="TLdivider">#b9bdc0</color>
 	<color name="TLBluePostHeader">#9aacc7</color>
 	<color name="TLText">#13173E</color>
 	<color name="TLText2">#010408</color>
 	<color name="TLPressed">#b58900</color>
+	<color name="hotTopic">#ff0d01</color>
+	<color name="regularTopic">#feef02</color>
+	<color name="stickyTopic">#6d00c2</color>
+	<color name="unknownTopic">#000000</color>
 </resources>

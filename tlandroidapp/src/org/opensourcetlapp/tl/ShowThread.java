@@ -4,19 +4,26 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.htmlcleaner.ContentNode;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPatherException;
+import org.opensourcetlapp.tl.Structs.PostInfo;
 
+import android.app.Activity;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Message;
+import android.text.Html;
+import android.text.InputFilter.LengthFilter;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.ArrayAdapter;
@@ -27,17 +34,20 @@ import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-public class ShowThread extends ListActivity implements Runnable {
+public class ShowThread extends Activity implements Runnable {
 
-	private String BASE_JS = "function toggleHidden(b,c,a,d){span=document.getElementById(b);link=document.getElementById(c);if(span.style.display!='none'){span.style.display='none';link.innerHTML=a}else{span.style.display='';link.innerHTML=d}}" +
-			"function toggleShowQuote(a){toggleHidden('showQuoteRest_'+a,'showQuoteLink_'+a,'Show nested quote +','Hide nested quote -')}" +
-			"function toggleShowSpoiler2(b,c){var a=$(b).children('span');if($(a[0]).text()=='+ Show'){$('#spoiler_'+c).show();$(a[0]).text('- Hide');$(a[1]).text(' -')}else{$('#spoiler_'+c).hide();$(a[0]).text('+ Show');$(a[1]).text(' +')}return false}" +
-			"function toggleShowSpoiler(c,a,b){spoilerDiv=document.getElementById('spoiler_'+b);if(c.innerHTML.match('^\\+')){c.innerHTML=getSpoilerHeader(a,false);spoilerDiv.style.display='';spoilerDiv.style.visibility='visible'}else{c.innerHTML=getSpoilerHeader(a,true);spoilerDiv.style.display='none';spoilerDiv.style.visibility='hidden'}}";
+	private String BASE_JS ="<script type='text/javascript'>function toggleShowQuote(b){var a=document.getElementById('showQuoteRest_'+b);a.style.display=a.style.display=='none'?'block':'none';}" +
+			"function toggleShowSpoiler2(b,c){var a=document.getElementById('spoiler_'+c);a.style.display=a.style.display=='none'?'block':'none';}"+
+			"function toggleShowSpoiler(c,a,b){toggleShowSpoiler2(c,b);}</script>";
+	
+	private static final String PREV_PAGE_XPATH = "./tbody/tr[last()]/td[2]/a";
+	private static final String LOGGED_IN_PREV_PAGE_XPATH = "./tbody/tr/td[2]/a";
 	
 	private String postURL;
 	private int topicId;
 	private String postTopic;
 	private int lastPage;
+	private String lastURL;
 	private boolean postLocked;
 	
 	private static CustomImageGetter imageGetter;
@@ -53,6 +63,10 @@ public class ShowThread extends ListActivity implements Runnable {
 	private ShowPostHandler handler;
 	private ProgressDialog progressDialog;
 	
+	private LayoutInflater mInflater;
+	
+	private LinearLayout container;
+	
 	/**
 	 *  pattern of different html elements we want to parse 
 	 */
@@ -62,27 +76,59 @@ public class ShowThread extends ListActivity implements Runnable {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.show_thread);
+		
+		mInflater = LayoutInflater.from(this);
+		
+		container = (LinearLayout)findViewById(R.id.listThread);
 
 		Bundle extras = getIntent().getExtras();
 		postURL = extras.getString("postURL");
 		postTopic = extras.getString("postTopic");	// TODO: Make the app pull the topic from the HTML
 		postLocked = extras.getBoolean("postLocked"); // TODO: This only works properly when opening this activity is opened from the ShowForum. Add closed-thread detection.
-		imageGetter = new CustomImageGetter(this);
+		imageGetter = new CustomImageGetter(container,this);
 		
-		parsePostURL();
-		//setTitle(TLLib.makeActivityTitle(String.format("(%d) %s", currentPage, postTopic)));
+		findViewById(R.id.next).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {loadPostURL(buildPostURL(currentPage+1));}
+		});
+		
+		findViewById(R.id.prev).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {loadPostURL(buildPostURL(currentPage-1));}
+		});
+		
+		findViewById(R.id.last).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {loadPostURL(buildPostURL(lastPage));}
+		});
+		
+		findViewById(R.id.first).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {loadPostURL(buildPostURL(1));}
+		});
+		
+		
 
 		cleaner = TLLib.buildDefaultHtmlCleaner();
 		context = this;
 		
-		progressDialog = ProgressDialog.show(this, null, "Loading...", true,
-				true);
-		handler = new ShowPostHandler(true, progressDialog, this);
-		
-		refreshDisplay();
-		handler.sendEmptyMessage(0);
-		
-		setListAdapter(new EfficientArrayAdapter(this, R.layout.show_thread_row,(PostData[]) postList));
+		refresh(true);		
+	}
+	
+	private void loadPostURL(String url) {
+		postURL = url;
+		parsePostURL();
+		refresh(true);
+	}
+	
+	private String buildPostURL(int pageNumber){
+		String temp = postURL;
+		int c = postURL.indexOf('?');
+		if (c != -1){
+			temp = postURL.substring(0, c);
+		}
+		temp += String.format("?topic_id=%d&currentpage=%d", topicId, pageNumber);
+		return temp;
 	}
 	
 	private void parsePostURL() {
@@ -104,16 +150,37 @@ public class ShowThread extends ListActivity implements Runnable {
 		}
 	}
 	
+	private void parseLastPageFromPostURL(){
+		if (lastURL != null){
+			String getAttributes = lastURL.split("\\?")[1];
+			String [] temp = getAttributes.split("#");
+			String [] attributes = temp[0].split("&");
+			for (String attribute : attributes){
+				String [] nameValue = attribute.split("=");
+
+				if (nameValue[0].equals("currentpage")){
+					lastPage = Integer.parseInt(nameValue[1]);
+				}
+			}
+		}
+		else {
+			lastPage = currentPage;
+		}
+	}
+	
 	private void refresh(boolean resetScrollPosition){
 		progressDialog = ProgressDialog.show(this, null, "Loading...", true,
 				true);
 		handler = new ShowPostHandler(resetScrollPosition, progressDialog, this);
+		container.removeAllViews();
 		new Thread(this).start();
 	}
 	
 	private void refreshDisplay() {
 		String absolutePostURL = postURL;
 		
+		parsePostURL();
+
 		if (postURL.charAt(0) == '/') {
 			absolutePostURL = TLLib.getAbsoluteURL(postURL);
 		}
@@ -142,6 +209,26 @@ public class ShowThread extends ListActivity implements Runnable {
 			Object[] posts =  node.evaluateXPath("//table[@width='742']/tbody/tr");
 			int offset = ((TagNode)posts[posts.length-1]).evaluateXPath("//form[@name='theform']").length > 0 ? 2 : 2;
 			
+			/** get number of page */
+			Object[] nextPages;
+			
+
+			nextPages = forumTagNode.evaluateXPath(LOGGED_IN_PREV_PAGE_XPATH);
+			
+			if (nextPages.length > 0) {
+				int nextPageLength = nextPages.length;
+				for (int i = nextPageLength - 1; i >= nextPageLength - 2; i--) {
+					TagNode nextPage = (TagNode) nextPages[i];
+					if (nextPage.getChildren().iterator().next().toString()
+							.trim().equals("Next")) {
+						TagNode lastPage = (TagNode) nextPages[i - 1];
+						lastURL = Html.fromHtml(
+								lastPage.getAttributeByName("href")).toString();
+					}
+				}
+			}
+			parseLastPageFromPostURL();
+			
 			postList = new PostData[posts.length - offset];
 			
 			for (int i = 0;i<posts.length - offset;i++) {
@@ -155,7 +242,7 @@ public class ShowThread extends ListActivity implements Runnable {
 				TagNode firstTd = (TagNode)((TagNode)postTr[1]).getChildren().get(0);
 				boolean type = (firstTd.getAttributeByName("class").equals("forumPost"));
 				
-				postData.setContent(cleaner.getInnerHtml(((TagNode)content.evaluateXPath("//td[@class='forumPost']")[0])).replaceAll("src=\"/", "src=\"http://www.teamliquid.net/"));
+				postData.setContent(BASE_JS + cleaner.getInnerHtml(((TagNode)content.evaluateXPath("//td[@class='forumPost']")[0]))/*.replaceAll("src=\"/", "src=\"http://www.teamliquid.net/")*/);
 				
 				postData.buildHeader(type,header);
 				
@@ -196,13 +283,125 @@ public class ShowThread extends ListActivity implements Runnable {
 			if (msg.what == 0
 					&& handler.progressStatus == TLHandler.PROGRESS_OKAY) {
 				setTitle(TLLib.makeActivityTitle(String.format("(%d/%d) %s", currentPage, lastPage, postTopic)));
+				
+				buildViews();
+				
 				progressDialog.dismiss();
 			} else {
 				super.handleMessage(msg);
 			}
 		}
 	};
+	/** build the view from the list of postData **/
+	private void buildViews() {
+		
+		for (int i = 0; i<postList.length;i++) {
+			
+			View postView = mInflater.inflate(R.layout.show_thread_row, null);
+			
+			WebView content = (WebView)postView.findViewById(R.id.postContent);
+			content.getSettings().setJavaScriptEnabled(true);
+			TextView poster = (TextView)postView.findViewById(R.id.posterName);
+			TextView countryDate = (TextView)postView.findViewById(R.id.postDate);
+			ImageView icon = (ImageView)postView.findViewById(R.id.postIcon);
+			
+			LinearLayout options = (LinearLayout)postView.findViewById(R.id.posterInfos);
+
+			content.loadDataWithBaseURL("http://www.teamliquid.com/",postList[i].getContent(), "text/html", null,null);
+			icon.setImageDrawable(imageGetter.getDrawable(postList[i].getIcon()));
+			
+			/** load values depending on the type of the post (normal,news)*/
+			if (postList[i].getType().equals("news")) {
+				poster.setText(postList[i].getTitle());
+			} else {
+				poster.setText(postList[i].getPoster());
+				postView.findViewById(R.id.postHeaderThread).setOnClickListener(new ThreadOnClickListener(options));
+				
+				if (postList[i].postId !=null) {
+					options.findViewById(R.id.quoteButton).setOnClickListener(new QuoteOnClickListener(Integer.parseInt(postList[i].postId)));
+				} else
+					options.findViewById(R.id.quoteButton).setVisibility(TextView.GONE);
+				
+				if (postList[i].getPoster() !=null && TLLib.loginStatus) {
+					options.findViewById(R.id.pmButton).setOnClickListener(new PMOnClickListener(postList[i].getPoster()));
+				} else
+					options.findViewById(R.id.pmButton).setVisibility(TextView.GONE);
+				
+				countryDate.setText(postList[i].getCountryDate());
+			}
+			
+			container.addView(postView,i);
+		}
+		
+		if (currentPage == 1) {
+			findViewById(R.id.prev).setEnabled(false);
+			findViewById(R.id.first).setEnabled(false);
+		} else {
+			findViewById(R.id.prev).setEnabled(true);
+			findViewById(R.id.first).setEnabled(true);
+		}
+		
+		if (currentPage == lastPage) {
+			findViewById(R.id.next).setEnabled(false);
+			findViewById(R.id.last).setEnabled(false);
+		} else {
+			findViewById(R.id.next).setEnabled(true);
+			findViewById(R.id.last).setEnabled(true);
+		}
+		
+		((TextView)findViewById(R.id.threadPage)).setText(currentPage+"/"+lastPage);
+	}
 	
+	public class ThreadOnClickListener implements OnClickListener {
+
+		private LinearLayout options;
+		
+		public ThreadOnClickListener(LinearLayout options) {
+			this.options = options;
+		}
+		@Override
+		public void onClick(View v) {
+			options.setVisibility(options.getVisibility() == LinearLayout.GONE ? LinearLayout.VISIBLE : LinearLayout.GONE);			
+		}
+		
+	}
+	
+	public class QuoteOnClickListener implements OnClickListener {
+
+		private int postId;
+		
+		public QuoteOnClickListener(int postId) {
+			this.postId = postId;
+		}
+		@Override
+		public void onClick(View v) {
+			Intent intent = new Intent().setClass(context, PostMessage.class);
+			intent.putExtra("postId", postId);
+			intent.putExtra("topicId", topicId);
+			
+			context.startActivity(intent);
+		}
+		
+	}
+	
+	public class PMOnClickListener implements OnClickListener {
+
+		private String login;
+		
+		public PMOnClickListener(String login) {
+			this.login = login;
+		}
+		@Override
+		public void onClick(View v) {
+			Intent intent = new Intent().setClass(context, ShowMyPMReply.class);
+			intent.putExtra("to", login);
+			context.startActivity(intent);
+		}
+		
+	}
+	
+	
+	/** Data class containing all the information concerning a post*/
 	public class PostData {
 		private String content;
 		
@@ -228,9 +427,53 @@ public class ShowThread extends ListActivity implements Runnable {
 			try {
 				this.setIcon(((TagNode)post.evaluateXPath("//img")[0]).getAttributeByName("src"));
 				if (!type2) {
-					String[] infos = ((TagNode)post.evaluateXPath("//span[@class='forummsginfo']")[0]).getChildren().get(2).toString().split("&nbsp;");
-					this.setPoster(infos[1]);
-					this.setCountryDate(infos[2]);
+					TagNode node = null;
+					
+					Object[] nodesArray = post.evaluateXPath("//span[@class='forummsginfo']");
+					if (nodesArray.length > 0)
+						node = (TagNode)nodesArray[0];
+					else {
+						node = (TagNode)post.evaluateXPath("//span[@class='forummsginfoa']")[0];
+					}
+					
+					String[] infos = null;
+					
+					if (node.getChildren().size() > 2 && ((TagNode)node.getChildren().get(1)).getName().equals("img")) {
+						if (node.getChildren().size() > 6) {
+							Object[] nodeInfos = node.getChildren().toArray();
+							if (!((TagNode)nodeInfos[3]).getName().equals("img"))
+								this.setPoster(((TagNode)nodeInfos[3]).getChildren().get(0).toString());
+							else
+								this.setPoster(((ContentNode)nodeInfos[2]).toString().replaceAll("&nbsp;", ""));
+							this.setCountryDate(((ContentNode)nodeInfos[6]).toString().replaceAll("&nbsp;", ""));
+						} else if (node.getChildren().size() > 5) {
+							Object[] nodeInfos = node.getChildren().toArray();
+							this.setPoster(((TagNode)nodeInfos[3]).getChildren().get(0).toString());
+							this.setCountryDate(((TagNode)nodeInfos[5]).toString().replaceAll("&nbsp;", ""));
+						} else if (node.getChildren().size() > 4) {
+							Object[] nodeInfos = node.getChildren().toArray();
+							if(TLLib.loginStatus) {
+								this.setPoster(((TagNode)nodeInfos[3]).getChildren().get(0).toString());
+								this.setCountryDate(((ContentNode)nodeInfos[4]).toString().replaceAll("&nbsp;", ""));
+							} else {
+								this.setPoster(((ContentNode)nodeInfos[2]).toString().replaceAll("&nbsp;", ""));
+								this.setCountryDate(((ContentNode)nodeInfos[4]).toString().replaceAll("&nbsp;", ""));
+							}
+						} else {
+							infos = node.getChildren().get(2).toString().split("&nbsp;");
+							this.setPoster(infos[1]);
+							this.setCountryDate(infos[2]);
+						}
+						
+					} else {
+						this.setPoster("Pop!");
+						this.setCountryDate(node.getChildren().get(0).toString().replaceAll("&nbsp;", ""));
+					}
+					
+					Object[] links = ((TagNode)post.getChildren().get(1)).evaluateXPath("//a");
+					if (TLLib.loginStatus && links.length > 2) {
+						postId = ((TagNode)links[links.length - 2]).getAttributeByName("href").split("\\?")[1].split("&")[0].split("=")[1];
+					}
 				} else {
 					this.setTitle(((TagNode)((TagNode)((TagNode)post.evaluateXPath("//td")[0]).getChildren().get(2)).getChildren().get(1)).getChildren().get(0).toString());
 				}
@@ -303,85 +546,5 @@ public class ShowThread extends ListActivity implements Runnable {
 		public void setCountryDate(String countryDate) {
 			this.countryDate = countryDate;
 		}
-		
-		
-	}
-	
-	public static class EfficientArrayAdapter extends BaseAdapter {
-		private PostData[] datas;
-		
-		public EfficientArrayAdapter(Context context, int textViewResourceId,
-				PostData[] objects) {
-			this.datas = objects;
-			mInflater = LayoutInflater.from(context);
-		}
-		
-		public int getCount() {
-            return datas.length;
-        }
-
-
-        @Override
-		public PostData getItem(int position) {
-			return datas[position];
-		}
-
-		public long getItemId(int position) {
-            return position;
-        }
-
-
-
-		private LayoutInflater mInflater;
-		
-		
-		
-		@Override
-		public View getView(int position, View convertView,ViewGroup parent) {
-			ViewHolder holder;
-			if (convertView == null) {
-				convertView = mInflater.inflate(R.layout.show_thread_row, null);
-
-				holder = new ViewHolder();
-				
-				holder.content = (WebView)convertView.findViewById(R.id.postContent);
-				holder.poster = (TextView)convertView.findViewById(R.id.posterName);
-				holder.countryDate = (TextView)convertView.findViewById(R.id.postDate);
-				holder.icon = (ImageView)convertView.findViewById(R.id.postIcon);
-				holder.position = (TextView)convertView.findViewById(R.id.posterInfos);
-
-				convertView.setTag(holder);
-			} else {
-				holder = (ViewHolder)convertView.getTag();
-				if (holder == null) {
-					holder = new ViewHolder();
-					convertView.setTag(holder);
-				}
-			}
-			final int pos = position;
-			String positionStr = String.valueOf(pos);
-			holder.content.loadData(getItem(pos).getContent(), "text/html", null);
-			holder.content.postInvalidate();
-			holder.icon.setImageDrawable(imageGetter.getDrawable(getItem(pos).getIcon()));
-			
-			if (getItem(pos).getType().equals("news")) {
-				holder.poster.setText(getItem(pos).getTitle());
-			} else {
-				holder.poster.setText(getItem(pos).getPoster());
-				holder.countryDate.setText(getItem(pos).getCountryDate());
-			}
-			positionStr += " "+String.valueOf(pos);
-			holder.position.setText(positionStr);
-			
-			return convertView;
-		}
-		
-		static class ViewHolder {
-			TextView position;
-			ImageView icon;
-			WebView content;
-			TextView poster;
-			TextView countryDate;
-	    }
 	}
 }

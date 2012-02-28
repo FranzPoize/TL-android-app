@@ -226,7 +226,7 @@ public class ShowForum extends ListActivity implements Runnable{
 		public void handleMessage(Message msg) {
 			if (msg.what == 0 && this.progressStatus == TLHandler.PROGRESS_OKAY){
 				progressDialog.setMessage("Rendering...");
-				getListView().setAdapter(new ForumAdapter(postInfoList, context));
+				getListView().setAdapter(new ForumAdapter(postInfoList, context,getListView()));
 				progressDialog.dismiss();
 			}
 			else {

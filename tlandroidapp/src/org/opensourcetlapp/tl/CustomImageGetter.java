@@ -33,11 +33,15 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.provider.OpenableColumns;
 import android.text.Html;
 /*
@@ -47,6 +51,7 @@ import android.text.Html;
  */
 import android.util.Log;
 import android.view.Display;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.VideoView;
 
@@ -55,11 +60,12 @@ public class CustomImageGetter implements Html.ImageGetter{
 	private static final String TAG = "CustomImageGetter";
 	private Context context;
 	private AssetManager assetManager;
+	private View container;
 	
-	public CustomImageGetter(Context context) {
+	public CustomImageGetter(View t,Context context) {
 		this.context = context;
 		assetManager = context.getAssets();
-		Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+		this.container = t;
 	}
 	
 	@Override
@@ -105,36 +111,6 @@ public class CustomImageGetter implements Html.ImageGetter{
 		}
 		return null;
 	}
-	private void downloadImage(String url,File f) throws IOException
-    {
-		URL myFileUrl;
-		try {
-			myFileUrl =new URL(url);
-		}
-		catch (MalformedURLException e){
-			myFileUrl = new URL(TLLib.getAbsoluteURL(url));
-		}
-		Log.d(TAG, "Downloading image: " + myFileUrl.toString());
-    	HttpURLConnection conn= (HttpURLConnection)myFileUrl.openConnection();
-        conn.setDoInput(true);
-        conn.connect();
-        InputStream is = conn.getInputStream();
-
-        BufferedInputStream buff = new BufferedInputStream(is);
-//        Bitmap bm = BitmapFactory.decodeStream(buff);
-       
-        FileOutputStream out = new FileOutputStream(f);
-        
-        byte[] buffer = new byte[1024];
-        int totalLength = 0;
-        int length;
-        while ((length = buff.read(buffer)) >= 0 ) {
-            totalLength += length;
-        	out.write(buffer, 0, length);
-        }
-        out.flush();
-        //bm.compress(Bitmap.CompressFormat.PNG, 90, out);    
-    }
 	
 	private InputStream getImageInputStream(String url) throws IOException{
 		URL myFileUrl;
