@@ -171,7 +171,7 @@ public class ShowForum extends ListActivity implements Runnable{
 		String postTopic = postInfo.topicString;
 		boolean postLocked = postInfo.locked;
 		
-		Intent intent = new Intent().setClass(this, ShowPost.class);
+		Intent intent = new Intent().setClass(this, ShowThread.class);
 		intent.putExtra("postURL", postURL);
 		intent.putExtra("postTopic", postTopic);
 		intent.putExtra("postLocked", postLocked);
@@ -226,7 +226,7 @@ public class ShowForum extends ListActivity implements Runnable{
 		public void handleMessage(Message msg) {
 			if (msg.what == 0 && this.progressStatus == TLHandler.PROGRESS_OKAY){
 				progressDialog.setMessage("Rendering...");
-				getListView().setAdapter(new ForumAdapter(postInfoList, context));
+				getListView().setAdapter(new ForumAdapter(postInfoList, context,getListView()));
 				progressDialog.dismiss();
 			}
 			else {

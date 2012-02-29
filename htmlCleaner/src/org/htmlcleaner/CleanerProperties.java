@@ -39,9 +39,6 @@ package org.htmlcleaner;
 
 /**
  * Properties defining cleaner's behaviour
- *
- * Created by: Vladimir Nikic<br/>
- * Date: March, 2008.
  */
 public class CleanerProperties {
 
@@ -52,8 +49,10 @@ public class CleanerProperties {
     ITagInfoProvider tagInfoProvider = null;
 
     boolean advancedXmlEscape = true;
+    boolean transResCharsToNCR = false;
     boolean useCdataForScriptAndStyle = true;
     boolean translateSpecialEntities = true;
+    boolean transSpecialEntitiesToNCR = false;
     boolean recognizeUnicodeChars = true;
     boolean omitUnknownTags = false;
     boolean treatUnknownTagsAsContent = false;
@@ -66,8 +65,8 @@ public class CleanerProperties {
     boolean useEmptyElementTags = true;
     boolean allowMultiWordAttributes = true;
     boolean allowHtmlInsideAttributes = false;
-    boolean ignoreQuestAndExclam = false;
-    boolean namespacesAware = true;
+    boolean ignoreQuestAndExclam = true;
+    boolean namespacesAware = false;
     String hyphenReplacementInComment = "=";
     String pruneTags = null;
     String booleanAttributeValues = BOOL_ATT_SELF;
@@ -84,6 +83,14 @@ public class CleanerProperties {
         this.advancedXmlEscape = advancedXmlEscape;
     }
 
+    public boolean isTransResCharsToNCR() {
+        return transResCharsToNCR;
+    }
+
+    public void setTransResCharsToNCR(boolean transResCharsToNCR) {
+        this.transResCharsToNCR = transResCharsToNCR;
+    }
+
     public boolean isUseCdataForScriptAndStyle() {
         return useCdataForScriptAndStyle;
     }
@@ -98,6 +105,14 @@ public class CleanerProperties {
 
     public void setTranslateSpecialEntities(boolean translateSpecialEntities) {
         this.translateSpecialEntities = translateSpecialEntities;
+    }
+
+    public boolean isTransSpecialEntitiesToNCR() {
+        return transSpecialEntitiesToNCR;
+    }
+
+    public void setTransSpecialEntitiesToNCR(boolean transSpecialEntitiesToNCR) {
+        this.transSpecialEntitiesToNCR = transSpecialEntitiesToNCR;
     }
 
     public boolean isRecognizeUnicodeChars() {

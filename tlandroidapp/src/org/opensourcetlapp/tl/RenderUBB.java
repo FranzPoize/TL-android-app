@@ -76,7 +76,7 @@ public class RenderUBB {
 	public RenderUBB(Context context, TagNode node){
 		this.context = context;
 		serializer = TLLib.getXmlSerializer();
-		imageGetter = new CustomImageGetter(context);
+		//imageGetter = new CustomImageGetter(context);
 		this.node = node;
 		
 		colorDictionary.put(" red", new Integer(Color.RED)); // The white space																// is necessary

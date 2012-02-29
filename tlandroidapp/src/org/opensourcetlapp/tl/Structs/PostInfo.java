@@ -63,9 +63,7 @@ public class PostInfo {
 		TagNode viewsTagNode = (TagNode) children.get(4);
 		TagNode lastMessageTagNode = (TagNode) children.get(5);
 		sb.setLength(0);
-		sb.append("<img src='");
 		sb.append(imageTagNode.getAttributeByName("src"));
-		sb.append("' />");
 		//postInfo.imageString = String.format("<img src='%s' />", (imageTagNode.getAttributeByName("src")));
 		postInfo.imageString = sb.toString();
 		postInfo.locked = imageTagNode.getAttributeByName("alt").equals("Locked");

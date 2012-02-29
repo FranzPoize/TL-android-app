@@ -100,9 +100,6 @@ import java.util.*;
  *      <li>if previous open tag is one of <code>tr</code>, <code>caption</code> or <code>colgroup</code>, it will be implicitely closed.</li>
  *   </ul>
  * </p>
- * <br>
- * Created by Vladimir Nikic.<br/>
- * Date: November, 2006
  */
 public class TagInfo {
 
@@ -116,12 +113,12 @@ public class TagInfo {
 
     private String name;
     private int contentType;
-    private Set<String> mustCloseTags = new HashSet<String>();
-    private Set<String> higherTags = new HashSet<String>();
-    private Set<String> childTags = new HashSet<String>();
-    private Set<String> permittedTags = new HashSet<String>();
-    private Set<String> copyTags = new HashSet<String>();
-    private Set<String> continueAfterTags = new HashSet<String>();
+    private Set mustCloseTags = new HashSet();
+    private Set higherTags = new HashSet();
+    private Set childTags = new HashSet();
+    private Set permittedTags = new HashSet();
+    private Set copyTags = new HashSet();
+    private Set continueAfterTags = new HashSet();
     private int belongsTo = BODY;
     private String requiredParent = null;
     private String fatalTag = null; 
@@ -220,51 +217,51 @@ public class TagInfo {
         return contentType;
     }
 
-    public Set<String> getMustCloseTags() {
+    public Set getMustCloseTags() {
         return mustCloseTags;
     }
 
-    public void setMustCloseTags(Set<String> mustCloseTags) {
+    public void setMustCloseTags(Set mustCloseTags) {
         this.mustCloseTags = mustCloseTags;
     }
 
-    public Set<String> getHigherTags() {
+    public Set getHigherTags() {
         return higherTags;
     }
 
-    public void setHigherTags(Set<String> higherTags) {
+    public void setHigherTags(Set higherTags) {
         this.higherTags = higherTags;
     }
 
-    public Set<String> getChildTags() {
+    public Set getChildTags() {
         return childTags;
     }
 
-    public void setChildTags(Set<String> childTags) {
+    public void setChildTags(Set childTags) {
         this.childTags = childTags;
     }
 
-    public Set<String> getPermittedTags() {
+    public Set getPermittedTags() {
         return permittedTags;
     }
 
-    public void setPermittedTags(Set<String> permittedTags) {
+    public void setPermittedTags(Set permittedTags) {
         this.permittedTags = permittedTags;
     }
 
-    public Set<String> getCopyTags() {
+    public Set getCopyTags() {
         return copyTags;
     }
 
-    public void setCopyTags(Set<String> copyTags) {
+    public void setCopyTags(Set copyTags) {
         this.copyTags = copyTags;
     }
 
-    public Set<String> getContinueAfterTags() {
+    public Set getContinueAfterTags() {
         return continueAfterTags;
     }
 
-    public void setContinueAfterTags(Set<String> continueAfterTags) {
+    public void setContinueAfterTags(Set continueAfterTags) {
         this.continueAfterTags = continueAfterTags;
     }
 

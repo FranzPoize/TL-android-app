@@ -43,16 +43,21 @@ import java.util.*;
 
 /**
  * <p>Pretty XML serializer - creates resulting XML with indenting lines.</p>
- *
- * Created by: Vladimir Nikic<br/>
- * Date: November, 2006.
  */
 public class PrettyXmlSerializer extends XmlSerializer {
 
-	private static final String INDENTATION_STRING = "\t";
+	private static final String DEFAULT_INDENTATION_STRING = "\t";
+
+    private String indentString = DEFAULT_INDENTATION_STRING;
+    private List<String> indents = new ArrayList<String>();
 
 	public PrettyXmlSerializer(CleanerProperties props) {
+		this(props, DEFAULT_INDENTATION_STRING);
+	}
+
+	public PrettyXmlSerializer(CleanerProperties props, String indentString) {
 		super(props);
+        this.indentString = indentString;
 	}
 
 	protected void serialize(TagNode tagNode, Writer writer) throws IOException {
@@ -63,25 +68,29 @@ public class PrettyXmlSerializer extends XmlSerializer {
 	 * @param level
 	 * @return Appropriate indentation for the specified depth.
 	 */
-    private String indent(int level) {
-        String result = "";
-        while (level > 0) {
-            result += INDENTATION_STRING;
-            level--;
+    private synchronized String getIndent(int level) {
+        int size = indents.size();
+        if (size <= level) {
+            String prevIndent = size == 0 ? null : indents.get(size - 1);
+            for (int i = size; i <= level; i++) {
+                String currIndent = prevIndent == null ? "" : prevIndent + indentString;
+                indents.add(currIndent);
+                prevIndent = currIndent;
+            }
         }
 
-        return result;
+        return indents.get(level);
     }
 
-    private String getIndentedText(String content,  int level) {
-        String indent = indent(level);
-        StringBuffer result = new StringBuffer( content.length() );
+    private String getIndentedText(String content, int level) {
+        String indent = getIndent(level);
+        StringBuilder result = new StringBuilder( content.length() );
         StringTokenizer tokenizer = new StringTokenizer(content, "\n\r");
 
         while (tokenizer.hasMoreTokens()) {
             String line = tokenizer.nextToken().trim();
             if (!"".equals(line)) {
-                result.append(indent + line + "\n");
+                result.append(indent).append(line).append("\n");
             }
         }
 
@@ -89,18 +98,17 @@ public class PrettyXmlSerializer extends XmlSerializer {
     }
 
     private String getSingleLineOfChildren(List children) {
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         Iterator childrenIt = children.iterator();
         boolean isFirst = true;
 
         while (childrenIt.hasNext()) {
             Object child = childrenIt.next();
 
-            if ( !(child instanceof ContentToken) ) {
+            if ( !(child instanceof ContentNode) ) {
                 return null;
             } else {
-                ContentToken contentToken = (ContentToken) child;
-                String content = contentToken.getContent();
+                String content = child.toString();
 
                 // if first item trims it from left
                 if (isFirst) {
@@ -126,10 +134,11 @@ public class PrettyXmlSerializer extends XmlSerializer {
 
     protected void serializePrettyXml(TagNode tagNode, Writer writer, int level) throws IOException {
         List tagChildren = tagNode.getChildren();
-        String indent = indent(level);
+        boolean isHeadlessNode = Utils.isEmptyString(tagNode.getName());
+        String indent = isHeadlessNode ? "" : getIndent(level);
 
         writer.write(indent);
-        serializeOpenTag(tagNode, writer);
+        serializeOpenTag(tagNode, writer, true);
 
         if ( !isMinimizedTagSyntax(tagNode) ) {
             String singleLine = getSingleLineOfChildren(tagChildren);
@@ -141,20 +150,19 @@ public class PrettyXmlSerializer extends XmlSerializer {
             		writer.write( singleLine.replaceAll("]]>", "]]&gt;") );
             	}
             } else {
-            	writer.write("\n");
-                Iterator childrenIt = tagChildren.iterator();
-                while (childrenIt.hasNext()) {
-                    Object child = childrenIt.next();
+                if (!isHeadlessNode) {
+            	    writer.write("\n");
+                }
+                for (Object child: tagChildren) {
                     if (child instanceof TagNode) {
-                        serializePrettyXml( (TagNode)child, writer, level + 1 );
-                    } else if (child instanceof ContentToken) {
-                        ContentToken contentToken = (ContentToken) child;
-                        String content = dontEscape ? contentToken.getContent().replaceAll("]]>", "]]&gt;") : escapeXml(contentToken.getContent());
-                        writer.write( getIndentedText(content, level + 1) );
-                    } else if (child instanceof CommentToken) {
-                        CommentToken commentToken = (CommentToken) child;
-                        String content = commentToken.getCommentedContent();
-                        writer.write( getIndentedText(content, level + 1) );
+                        serializePrettyXml( (TagNode)child, writer, isHeadlessNode ? level : level + 1 );
+                    } else if (child instanceof ContentNode) {
+                        String content = dontEscape ? child.toString().replaceAll("]]>", "]]&gt;") : escapeXml(child.toString());
+                        writer.write( getIndentedText(content, isHeadlessNode ? level : level + 1) );
+                    } else if (child instanceof CommentNode) {
+                        CommentNode commentNode = (CommentNode) child;
+                        String content = commentNode.getCommentedContent();
+                        writer.write( getIndentedText(content, isHeadlessNode ? level : level + 1) );
                     }
                 }
             }
@@ -163,7 +171,7 @@ public class PrettyXmlSerializer extends XmlSerializer {
             	writer.write(indent);
             }
 
-            serializeEndTag(tagNode, writer);
+            serializeEndTag(tagNode, writer, true);
         }
     }
 

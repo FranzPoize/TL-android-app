@@ -39,20 +39,30 @@ package org.htmlcleaner;
 
 import java.io.*;
 import java.net.URL;
-import java.util.Map;
+import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * <p>Common utilities.</p>
- *
- * Created by: Vladimir Nikic<br/>
- * Date: November, 2006.
  */
 public class Utils {
 
     public static String VAR_START = "${";
     public static String VAR_END = "}";
+
+    public static final Map<Character, String> RESERVED_XML_CHARS = new HashMap<Character, String>();
+
+    static {
+        RESERVED_XML_CHARS.put('&', "&amp;");
+        RESERVED_XML_CHARS.put('<', "&lt;");
+        RESERVED_XML_CHARS.put('>', "&gt;");
+        RESERVED_XML_CHARS.put('\"', "&quot;");
+        RESERVED_XML_CHARS.put('\'', "&apos;");
+    }
     
     /**
      * Trims specified string from left.
@@ -91,37 +101,67 @@ public class Utils {
 
         return (index <= 0) ? "" : s.substring(0, index);
     }
-    
-    /**
-     * Reads content from the specified URL with specified charset into string
-     * @param url
-     * @param charset
-     * @throws IOException
-     */
-    public static StringBuffer readUrl(URL url, String charset) throws IOException {
-        StringBuffer buffer = new StringBuffer(1024);
 
-        Object content = url.getContent();
-        if (content instanceof InputStream) {
-            InputStreamReader reader = new InputStreamReader((InputStream)content, charset);
-            char[] charArray = new char[1024];
-
-            int charsRead = 0;
-            do {
-                charsRead = reader.read(charArray);
-                if (charsRead >= 0) {
-                    buffer.append(charArray, 0, charsRead);
+    public static String getCharsetFromContentTypeString(String contentType) {
+        if (contentType != null) {
+            String pattern = "charset=([a-z\\d\\-]*)";
+            Matcher matcher = Pattern.compile(pattern,  Pattern.CASE_INSENSITIVE).matcher(contentType);
+            if (matcher.find()) {
+                String charset = matcher.group(1);
+                if (Charset.isSupported(charset)) {
+                    return charset;
                 }
-            } while (charsRead > 0);
+            }
+        }
+        
+        return null;
+    }
+
+    public static String getCharsetFromContent(URL url) throws IOException {
+        InputStream stream = url.openStream();
+        byte chunk[] = new byte[2048];
+        int bytesRead = stream.read(chunk);
+        if (bytesRead > 0) {
+            String startContent = new String(chunk);
+            String pattern = "\\<meta\\s*http-equiv=[\\\"\\']content-type[\\\"\\']\\s*content\\s*=\\s*[\"']text/html\\s*;\\s*charset=([a-z\\d\\-]*)[\\\"\\'\\>]";
+            Matcher matcher = Pattern.compile(pattern,  Pattern.CASE_INSENSITIVE).matcher(startContent);
+            if (matcher.find()) {
+                String charset = matcher.group(1);
+                if (Charset.isSupported(charset)) {
+                    return charset;
+                }
+            }
         }
 
-        return buffer;
+        return null;
     }
 
     public static boolean isHexadecimalDigit(char ch) {
         return Character.isDigit(ch) ||
                ch == 'A' || ch == 'a' || ch == 'B' || ch == 'b' || ch == 'C' || ch == 'c' ||
                ch == 'D' || ch == 'd' || ch == 'E' || ch == 'e' || ch == 'F' || ch == 'f';
+    }
+
+    public static boolean isValidXmlChar(char ch) {
+        return ((ch >= 0x20) && (ch <= 0xD7FF)) ||
+               (ch == 0x9) ||
+               (ch == 0xA) ||
+               (ch == 0xD) ||
+               ((ch >= 0xE000) && (ch <= 0xFFFD)) ||
+               ((ch >= 0x10000) && (ch <= 0x10FFFF));
+    }
+
+    public static boolean isReservedXmlChar(char ch) {
+        return RESERVED_XML_CHARS.containsKey(ch);
+    }
+
+    public static boolean isValidInt(String s, int radix) {
+        try {
+            Integer.parseInt(s, radix);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
     
     /**
@@ -137,57 +177,55 @@ public class Utils {
 
         if (s != null) {
     		int len = s.length();
-    		StringBuffer result = new StringBuffer(len);
+    		StringBuilder result = new StringBuilder(len);
     		
     		for (int i = 0; i < len; i++) {
     			char ch = s.charAt(i);
     			
     			if (ch == '&') {
-    				if ( (advanced || recognizeUnicodeChars) && (i < len-1) && (s.charAt(i+1) == '#') ) {
-    					int charIndex = i + 2;
-    					String unicode = "";
-    					while ( charIndex < len &&
-                                (isHexadecimalDigit(s.charAt(charIndex)) || s.charAt(charIndex) == 'x' || s.charAt(charIndex) == 'X') 
-                              ) {
-    						unicode += s.charAt(charIndex);
-    						charIndex++;
-    					}
-    					if (charIndex == len || !"".equals(unicode)) {
-    						try {
-    							char unicodeChar = unicode.toLowerCase().startsWith("x") ?
-                                                        (char)Integer.parseInt(unicode.substring(1), 16) :                                
-                                                        (char)Integer.parseInt(unicode);
-    							if ( "&<>\'\"".indexOf(unicodeChar) < 0 ) {
-	    							int replaceChunkSize = (charIndex < len && s.charAt(charIndex) == ';') ? unicode.length()+1 : unicode.length();
-	    							result.append( recognizeUnicodeChars ? String.valueOf(unicodeChar) : "&#" + unicode + ";" );
-	    							i += replaceChunkSize + 1;
-    							} else {
-        							i = charIndex;
-        							result.append("&amp;#" + unicode + ";");
-    							}
-    						} catch (NumberFormatException e) {
-    							i = charIndex;
-    							result.append("&amp;#" + unicode + ";");
-    						}
+    				if ( (advanced || recognizeUnicodeChars) && (i < len-2) && (s.charAt(i+1) == '#') ) {
+                        boolean isHex = Character.toLowerCase(s.charAt(i+2)) == 'x';
+                        int charIndex = i + (isHex ? 3 : 2);
+                        int radix = isHex ? 16 : 10;
+                        String unicode = "";
+                        while (charIndex < len) {
+                            char currCh = s.charAt(charIndex);
+                            if (currCh == ';') {
+                                break;
+                            } else if (isValidInt(unicode + currCh, radix)) {
+                                unicode += currCh;
+                                charIndex++;
+                            } else {
+                                charIndex--;
+                                break;
+                            }
+                        }
+
+    					if (isValidInt(unicode, radix)) {
+                            char unicodeChar = (char)Integer.parseInt(unicode, radix);
+                            if ( !isValidXmlChar(unicodeChar) ) {
+                                i = charIndex;
+                            } else if ( !isReservedXmlChar(unicodeChar) ) {
+                                result.append( recognizeUnicodeChars ? String.valueOf(unicodeChar) : "&#" + unicode + ";" );
+                                i = charIndex;
+                            } else {
+                                i = charIndex;
+                                result.append("&#" + unicode + ";");
+                            }
     					} else {
     						result.append("&amp;");
     					}
     				} else {
     					if (translateSpecialEntities) {
-    						// get following sequence of most 10 characters
-    						String seq = s.substring(i, i+Math.min(10, len-i));
+                            // get minimal following sequence required to recognize some special entitiy
+                            String seq = s.substring(i, i + Math.min(SpecialEntity.getMaxEntityLength() + 2, len - i));
     						int semiIndex = seq.indexOf(';');
     						if (semiIndex > 0) {
-    							String entity = seq.substring(1, semiIndex);
-    							Integer code = (Integer) SpecialEntities.entities.get(entity);
-    							if (code != null) {
-    								int entityLen = entity.length();
-                                    if (recognizeUnicodeChars) {
-                                        result.append( (char)code.intValue() );
-                                    } else {
-                                        result.append( "&#" + code + ";" );
-                                    }
-    								i += entityLen + 1;
+    							String entityKey = seq.substring(1, semiIndex);
+    							SpecialEntity entity = SpecialEntity.getEntity(entityKey);
+    							if (entity != null) {
+                                    result.append(props.isTransSpecialEntitiesToNCR() ? entity.getDecimalNCR() : entity.getCharacter());
+    								i += entityKey.length() + 1;
     								continue;
     							}
     						}
@@ -195,38 +233,26 @@ public class Utils {
     					
     					if (advanced) {
                             String sub = s.substring(i);
-                            if ( sub.startsWith("&amp;") ) {
-                                result.append(isDomCreation ? "&" : "&amp;");
-                                i += 4;
-                            } else if ( sub.startsWith("&apos;") ) {
-                                result.append(isDomCreation ? "'" : "&apos;");
-                                i += 5;
-                            } else if ( sub.startsWith("&gt;") ) {
-                                result.append(isDomCreation ? ">" : "&gt;");
-                                i += 3;
-                            } else if ( sub.startsWith("&lt;") ) {
-                                result.append(isDomCreation ? "<" : "&lt;");
-                                i += 3;
-                            } else if ( sub.startsWith("&quot;") ) {
-                                result.append(isDomCreation ? "\"" : "&quot;");
-                                i += 5;
-                            } else {
-                                result.append(isDomCreation ? "&" : "&amp;");
+                            boolean isReservedSeq = false;
+                            for (Map.Entry<Character, String> entry: RESERVED_XML_CHARS.entrySet()) {
+                                String seq = entry.getValue();
+                                if ( sub.startsWith(seq) ) {
+                                    result.append( isDomCreation ? entry.getKey() : (props.transResCharsToNCR ? "&#" + (int)entry.getKey() + ";" : seq) );
+                                    i += seq.length() - 1;
+                                    isReservedSeq = true;
+                                    break;
+                                }
                             }
-    						
+                            if (!isReservedSeq) {
+                                result.append( isDomCreation ? "&" : (props.transResCharsToNCR ? "&#" + (int)'&' + ";" :  RESERVED_XML_CHARS.get('&')) );
+                            }
     						continue;
     					}
     					
     					result.append("&amp;");
     				}
-    			} else if (ch == '\'') {
-    				result.append("&apos;");
-    			} else if (ch == '>') {
-    				result.append("&gt;");
-    			} else if (ch == '<') {
-    				result.append("&lt;");
-    			} else if (ch == '\"') {
-    				result.append("&quot;");
+    			} else if (isReservedXmlChar(ch)) {
+    				result.append( props.transResCharsToNCR ? "&#" + (int)ch + ";" : (isDomCreation ? ch : RESERVED_XML_CHARS.get(ch)) );
     			} else {
     				result.append(ch);
     			}
@@ -274,7 +300,7 @@ public class Utils {
             }
             for (int i = 0; i < len; i++) {
                 char ch = s.charAt(i);
-                if ( (i == 0 && !Character.isUnicodeIdentifierStart(ch)) ||
+                if ( (i == 0 && !Character.isUnicodeIdentifierStart(ch) && ch != '_') ||
                      (!Character.isUnicodeIdentifierStart(ch) && !Character.isDigit(ch) && !Utils.isIdentifierHelperChar(ch)) ) {
                     return false;
                 }
@@ -307,7 +333,7 @@ public class Utils {
             return template;
         }
 
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
 
         int startIndex = template.indexOf(VAR_START);
         int endIndex = -1;
@@ -374,5 +400,81 @@ public class Utils {
             }
         }
     }
-    
+
+    /**
+     * Checks if specified link is full URL.
+     *
+     * @param link
+     * @return True, if full URl, false otherwise.
+     */
+    public static boolean isFullUrl(String link) {
+        if (link == null) {
+            return false;
+        }
+        link = link.trim().toLowerCase();
+        return link.startsWith("http://") || link.startsWith("https://") || link.startsWith("file://");
+    }
+
+    /**
+     * Calculates full URL for specified page URL and link
+     * which could be full, absolute or relative like there can
+     * be found in A or IMG tags.
+     */
+    public static String fullUrl(String pageUrl, String link) {
+        if (isFullUrl(link)) {
+            return link;
+        } else if (link != null && link.startsWith("?")) {
+            int qindex = pageUrl.indexOf('?');
+            int len = pageUrl.length();
+            if (qindex < 0) {
+                return pageUrl + link;
+            } else if (qindex == len - 1) {
+                return pageUrl.substring(0, len - 1) + link;
+            } else {
+                return pageUrl + "&" + link.substring(1);
+            }
+        }
+
+        boolean isLinkAbsolute = link.startsWith("/");
+
+        if (!isFullUrl(pageUrl)) {
+            pageUrl = "http://" + pageUrl;
+        }
+
+        int slashIndex = isLinkAbsolute ? pageUrl.indexOf("/", 8) : pageUrl.lastIndexOf("/");
+        if (slashIndex <= 8) {
+            pageUrl += "/";
+        } else {
+            pageUrl = pageUrl.substring(0, slashIndex + 1);
+        }
+
+        return isLinkAbsolute ? pageUrl + link.substring(1) : pageUrl + link;
+    }
+
+    /**
+     * @param name
+     * @return For xml element name or attribute name returns prefix (part before :) or null if there is no prefix
+     */
+    public static String getXmlNSPrefix(String name) {
+        int colIndex = name.indexOf(':');
+        if (colIndex > 0) {
+            return name.substring(0, colIndex);
+        }
+
+        return null;
+    }
+
+    /**
+     * @param name
+     * @return For xml element name or attribute name returns name after prefix (part after :)
+     */
+    public static String getXmlName(String name) {
+        int colIndex = name.indexOf(':');
+        if (colIndex > 0 && colIndex < name.length() - 1) {
+            return name.substring(colIndex + 1);
+        }
+
+        return name;
+    }
+
 }

@@ -48,9 +48,6 @@ import java.util.Iterator;
 
 /**
  * <p>Command line usage class.</p>
- *
- * Created by: Vladimir Nikic <br/>
- * Date: November, 2006.
  */
 public class CommandLine {
 
@@ -82,10 +79,12 @@ public class CommandLine {
                                "[dest = <file>] [outcharset = <charset>] [taginfofile=<file>] [options...]");
             System.err.println("");
             System.err.println("where options include:");
-            System.err.println("    outputtype=simple* | compact | browser-compact | pretty");
+            System.err.println("    outputtype=simple* | compact | browser-compact | pretty | htmlsimple | htmlcompact | htmlpretty");
             System.err.println("    advancedxmlescape=true* | false");
+            System.err.println("    transrescharstoncr=true | false*");
             System.err.println("    usecdata=true* | false");
             System.err.println("    specialentities=true* | false");
+            System.err.println("    transspecialentitiestoncr=true | false*");
             System.err.println("    unicodechars=true* | false");
             System.err.println("    omitunknowntags=true | false*");
             System.err.println("    treatunknowntagsascontent=true | false*");
@@ -94,16 +93,16 @@ public class CommandLine {
             System.err.println("    omitcomments=true | false*");
             System.err.println("    omitxmldecl=true | false*");
             System.err.println("    omitdoctypedecl=true* | false");
-            System.err.println("    omithtmlenvelope=true | false*");
             System.err.println("    useemptyelementtags=true* | false");
             System.err.println("    allowmultiwordattributes=true* | false");
             System.err.println("    allowhtmlinsideattributes=true | false*");
-            System.err.println("    ignoreqe=true | false*");
+            System.err.println("    ignoreqe=true* | false");
             System.err.println("    namespacesaware=true* | false");
             System.err.println("    hyphenreplacement=<string value> [=]");
             System.err.println("    prunetags=<string value> []");
             System.err.println("    booleanatts=self* | empty | true");
             System.err.println("    nodebyxpath=<xpath expression>");
+            System.err.println("    omitenvelope=true | false*");
             System.err.println("    t:<sourcetagX>[=<desttag>[,<preserveatts>]]");
             System.err.println("    t:<sourcetagX>.<destattrY>[=<template>]");
             System.exit(1);
@@ -122,8 +121,10 @@ public class CommandLine {
         String destination = getArgValue(args, "dest");
         String outputType = getArgValue(args, "outputtype");
         String advancedXmlEscape = getArgValue(args, "advancedxmlescape");
+        String transResCharsToNCR = getArgValue(args, "transrescharstoncr");
         String useCData = getArgValue(args, "usecdata");
         String translateSpecialEntities = getArgValue(args, "specialentities");
+        String transSpecialEntitiesToNCR = getArgValue(args, "transspecialentitiestoncr");
         String unicodeChars = getArgValue(args, "unicodechars");
         String omitUnknownTags = getArgValue(args, "omitunknowntags");
         String treatUnknownTagsAsContent = getArgValue(args, "treatunknowntagsascontent");
@@ -142,6 +143,8 @@ public class CommandLine {
         String pruneTags = getArgValue(args, "prunetags");
         String booleanAtts = getArgValue(args, "booleanatts");
         String nodeByXPath = getArgValue(args, "nodebyxpath");
+
+        boolean omitEnvelope = toBoolean( getArgValue(args, "omitenvelope") );
 
         HtmlCleaner cleaner;
 
@@ -174,12 +177,20 @@ public class CommandLine {
             props.setAdvancedXmlEscape( toBoolean(advancedXmlEscape) );
         }
 
+        if ( !"".equals(transResCharsToNCR) ) {
+            props.setTransResCharsToNCR( toBoolean(transResCharsToNCR) );
+        }
+
         if ( !"".equals(useCData) ) {
             props.setUseCdataForScriptAndStyle( toBoolean(useCData) );
         }
 
         if ( !"".equals(translateSpecialEntities) ) {
             props.setTranslateSpecialEntities( toBoolean(translateSpecialEntities) );
+        }
+
+        if ( !"".equals(transSpecialEntitiesToNCR) ) {
+            props.setTransSpecialEntitiesToNCR( toBoolean(transSpecialEntitiesToNCR) );
         }
 
         if ( !"".equals(unicodeChars) ) {
@@ -235,7 +246,7 @@ public class CommandLine {
         }
 
         // collect transformation info
-        Map<String, String> transInfos = new TreeMap<String, String>();
+        Map transInfos = new TreeMap();
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
             if (arg.startsWith("t:") && arg.length() > 2) {
@@ -248,9 +259,9 @@ public class CommandLine {
         }
         if (transInfos != null) {
             CleanerTransformations transformations = new CleanerTransformations();
-            Iterator<Map.Entry<String,String>> iterator = transInfos.entrySet().iterator();
+            Iterator iterator = transInfos.entrySet().iterator();
             while (iterator.hasNext()) {
-                Map.Entry<String,String> entry = iterator.next();
+                Map.Entry entry = (Map.Entry) iterator.next();
                 String tag = (String) entry.getKey();
                 String value = (String) entry.getValue();
                 Utils.updateTagTransformations(transformations, tag, value);
@@ -262,11 +273,11 @@ public class CommandLine {
 
         TagNode node;
 
-        String src = source.toLowerCase();
-        if ( src.startsWith("http://") || src.startsWith("https://") ) {
-            node = cleaner.clean(new URL(src), inCharset);
+        String srcLowerCase = source.toLowerCase();
+        if ( srcLowerCase.startsWith("http://") || srcLowerCase.startsWith("https://") ) {
+            node = cleaner.clean(new URL(source), inCharset);
         } else {
-            node = cleaner.clean(new File(src), inCharset);
+            node = cleaner.clean(new File(source), inCharset);
         }
 
         // if user specifies XPath expresssion to choose node for serialization, then
@@ -294,13 +305,19 @@ public class CommandLine {
         }
 
         if ( "compact".equals(outputType) ) {
-            new CompactXmlSerializer(props).writeXmlToStream(node, out, outCharset);
+            new CompactXmlSerializer(props).writeToStream(node, out, outCharset, omitEnvelope);
         } else if ( "browser-compact".equals(outputType) ) {
-            new BrowserCompactXmlSerializer(props).writeXmlToStream(node, out, outCharset);
+            new BrowserCompactXmlSerializer(props).writeToStream(node, out, outCharset, omitEnvelope);
         } else if ( "pretty".equals(outputType) ) {
-            new PrettyXmlSerializer(props).writeXmlToStream(node, out, outCharset);
+            new PrettyXmlSerializer(props).writeToStream(node, out, outCharset, omitEnvelope);
+        } else if ( "htmlsimple".equals(outputType) ) {
+            new SimpleHtmlSerializer(props).writeToStream(node, out, outCharset, omitEnvelope);
+        } else if ( "htmlcompact".equals(outputType) ) {
+            new CompactHtmlSerializer(props).writeToStream(node, out, outCharset, omitEnvelope);
+        } else if ( "htmlpretty".equals(outputType) ) {
+            new PrettyHtmlSerializer(props).writeToStream(node, out, outCharset, omitEnvelope);
         } else {
-            new SimpleXmlSerializer(props).writeXmlToStream(node, out, outCharset);
+            new SimpleXmlSerializer(props).writeToStream(node, out, outCharset, omitEnvelope);
         }
 
         System.out.println("Finished successfully in " + (System.currentTimeMillis() - start)+ "ms." );

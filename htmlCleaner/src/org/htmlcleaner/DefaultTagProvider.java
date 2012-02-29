@@ -45,17 +45,14 @@ import java.util.HashMap;
  * It is used as default tag info provider.
  * Class is created for performance purposes - parsing XML file requires some
  * processing time.
- *
- * Created by: Vladimir Nikic<br/>
- * Date: April, 2008.
  */
-public class DefaultTagProvider extends HashMap implements ITagInfoProvider {
+public class DefaultTagProvider extends HashMap<String, TagInfo> implements ITagInfoProvider {
 
     // singleton instance, used if no other TagInfoProvider is specified
     private static DefaultTagProvider _instance;
 
     /**
-     * Returns singleton instance of this class.
+     * @return Singleton instance of this class.
      */
     public static synchronized DefaultTagProvider getInstance() {
         if (_instance == null) {
@@ -272,9 +269,9 @@ public class DefaultTagProvider extends HashMap implements ITagInfoProvider {
         this.put("dir", tagInfo);
 
         tagInfo = new TagInfo("table", TagInfo.CONTENT_ALL, TagInfo.BODY, false, false, false);
-        tagInfo.defineAllowedChildrenTags("tr,tbody,thead,tfoot,colgroup,caption,tr");
+        tagInfo.defineAllowedChildrenTags("tr,tbody,thead,tfoot,colgroup,col,form,caption,tr");
         tagInfo.defineCloseBeforeCopyInsideTags("a,bdo,strong,em,q,b,i,u,tt,sub,sup,big,small,strike,s,font");
-        tagInfo.defineCloseBeforeTags("tr,thead,tbody,tfoot,caption,colgroup,table,p,address,label,abbr,acronym,dfn,kbd,samp,var,cite,code,param,xml");
+        tagInfo.defineCloseBeforeTags("tr,thead,tbody,tfoot,caption,colgroup,table,address,label,abbr,acronym,dfn,kbd,samp,var,cite,code,param");
         this.put("table", tagInfo);
 
         tagInfo = new TagInfo("tr", TagInfo.CONTENT_ALL, TagInfo.BODY, false, false, false);
@@ -316,7 +313,7 @@ public class DefaultTagProvider extends HashMap implements ITagInfoProvider {
         this.put("tfoot", tagInfo);
 
         tagInfo = new TagInfo("col", TagInfo.CONTENT_NONE, TagInfo.BODY, false, false, false);
-        tagInfo.defineFatalTags("colgroup");
+        tagInfo.defineFatalTags("table");
         this.put("col", tagInfo);
 
         tagInfo = new TagInfo("colgroup", TagInfo.CONTENT_ALL, TagInfo.BODY, false, false, false);
@@ -371,6 +368,11 @@ public class DefaultTagProvider extends HashMap implements ITagInfoProvider {
         tagInfo.defineCloseBeforeCopyInsideTags("a,bdo,strong,em,q,b,i,u,tt,sub,sup,big,small,strike,s,font");
         tagInfo.defineCloseBeforeTags("p,address,label,abbr,acronym,dfn,kbd,samp,var,cite,code,param,xml");
         this.put("fieldset", tagInfo);
+
+        tagInfo = new TagInfo("legend", TagInfo.CONTENT_TEXT, TagInfo.BODY, false, false, false);
+        tagInfo.defineRequiredEnclosingTags("fieldset");
+        tagInfo.defineCloseBeforeTags("legend");
+        this.put("legend", tagInfo);
 
         tagInfo = new TagInfo("isindex", TagInfo.CONTENT_NONE, TagInfo.BODY, true, false, false);
         tagInfo.defineCloseBeforeCopyInsideTags("a,bdo,strong,em,q,b,i,u,tt,sub,sup,big,small,strike,s,font");
@@ -464,7 +466,27 @@ public class DefaultTagProvider extends HashMap implements ITagInfoProvider {
     }
 
     public TagInfo getTagInfo(String tagName) {
-        return (TagInfo) get(tagName);
+        return get(tagName);
+    }
+
+    /**
+     * Removes tag info with specified name.
+     * @param tagName Name of the tag to be removed from the tag provider.
+     */
+    public void removeTagInfo(String tagName) {
+        if (tagName != null) {
+            remove(tagName.toLowerCase());
+        }
+    }
+
+    /**
+     * Sets new tag info.
+     * @param tagInfo tag info to be added to the provider.
+     */
+    public void addTagInfo(TagInfo tagInfo) {
+        if (tagInfo != null) {
+            put(tagInfo.getName().toLowerCase(), tagInfo);
+        }
     }
     
 }

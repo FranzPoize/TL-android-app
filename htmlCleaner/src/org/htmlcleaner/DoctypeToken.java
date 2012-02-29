@@ -44,9 +44,6 @@ import org.htmlcleaner.BaseToken;
 
 /**
  * <p>HTML doctype token.</p>
- *
- * Created by: Vladimir Nikic<br/>
- * Date: November, 2006.
  */
 public class DoctypeToken implements BaseToken {
 
@@ -114,8 +111,24 @@ public class DoctypeToken implements BaseToken {
     	return "";
     }
     
-    public void serialize(XmlSerializer xmlSerializer, Writer writer) throws IOException {
+    public void serialize(Serializer serializer, Writer writer) throws IOException {
     	writer.write(getContent() + "\n");
+    }
+
+    public String getPart1() {
+        return part1;
+    }
+
+    public String getPart2() {
+        return part2;
+    }
+
+    public String getPart3() {
+        return part3;
+    }
+
+    public String getPart4() {
+        return part4;
     }
 
 }
