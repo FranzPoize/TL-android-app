@@ -307,7 +307,7 @@ public class ShowThread extends Activity implements Runnable {
 			
 			LinearLayout options = (LinearLayout)postView.findViewById(R.id.posterInfos);
 
-			content.loadDataWithBaseURL("http://www.teamliquid.com/",postList[i].getContent(), "text/html", null,null);
+			content.loadDataWithBaseURL("http://www.teamliquid.net/",postList[i].getContent(), "text/html", null,null);
 			icon.setImageDrawable(imageGetter.getDrawable(postList[i].getIcon()));
 			
 			/** load values depending on the type of the post (normal,news)*/
