@@ -7,12 +7,4 @@
         android:title="Reply" />  
     <item android:id="@+id/refresh"
         android:title="Refresh" />  
- 	<item android:id="@+id/prev"
-        android:title="Previous" />
-    <item android:id="@+id/next"
-        android:title="Next" />
-            <item android:id="@+id/first"
-        android:title="First" />  
-    <item android:id="@+id/last"
-        android:title="Last" />
 </menu>

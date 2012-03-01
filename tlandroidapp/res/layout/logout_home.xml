@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@color/TLBlue3">
+    	<ImageView android:src="@drawable/tl_logo"
+    	    android:layout_width="wrap_content"
+    		android:layout_height="wrap_content"/>
+    	<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:gravity="right"
+			android:paddingRight="5dip"
+			android:text="LOGIN"
+			android:textColor="@color/TLText"
+			android:textStyle="bold"
+			android:width="90sp" />
+    	<EditText
+			android:id="@+id/username"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:singleLine="true" />
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:gravity="right"
+			android:paddingRight="5dip"
+			android:text="PASSWORD"
+			android:textColor="@color/TLText"
+			android:textStyle="bold"
+			android:width="90sp" />
+
+		<EditText
+			android:id="@+id/password"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:paddingLeft="5dip"
+			android:password="true"
+			android:singleLine="true" />
+		<LinearLayout 
+		    android:gravity="center" 
+		    android:layout_width="fill_parent"
+		    android:layout_height="wrap_content">
+		    <CheckBox
+                    android:id="@+id/rememberMeCheckBox"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+            <TextView
+                android:id="@+id/rememberMeCheckBoxText"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:text="Remember me"
+                android:textColor="@color/TLText" />
+		    <Button
+				android:id="@+id/loginButton"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_alignParentRight="true"
+				android:layout_marginRight="3dp"
+				android:background="@drawable/button_gradient"
+				android:text="Login"
+				android:textColor="@color/TLBlue" />
+		</LinearLayout>
+</LinearLayout>

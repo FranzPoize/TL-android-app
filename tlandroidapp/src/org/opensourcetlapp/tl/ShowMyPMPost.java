@@ -46,6 +46,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.webkit.WebView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -54,6 +55,11 @@ public class ShowMyPMPost extends Activity implements Runnable{
 	private ProgressDialog progressDialog;
 	private TLHandler handler;
 	private static final String PARSE_NODE = "<table width='100%' cellpadding='2' cellspacing='0' border='0' style='border: 1px solid #00005D;'>";
+	
+	private String BASE_JS ="<script type='text/javascript'>function toggleShowQuote(b){var a=document.getElementById('showQuoteRest_'+b);a.style.display=a.style.display=='none'?'block':'none';}" +
+			"function toggleShowSpoiler2(b,c){var a=document.getElementById('spoiler_'+c);a.style.display=a.style.display=='none'?'block':'none';}"+
+			"function toggleShowSpoiler(c,a,b){toggleShowSpoiler2(c,b);}</script>";
+	
 	private LinearLayout forumPostView;
 	
 	private TextView fromTextView;
@@ -65,6 +71,8 @@ public class ShowMyPMPost extends Activity implements Runnable{
 	private String replyURL;
 	private RenderUBB renderUBB;
 	TextView msgTextView;
+	
+	private String content;
 	
     @Override 
     public void onConfigurationChanged(Configuration newConfig) { 
@@ -97,7 +105,9 @@ public class ShowMyPMPost extends Activity implements Runnable{
 	}
 	
 	private void render(){
-		forumPostView.addView(renderUBB.curTextView);
+		WebView contentView = new WebView(context);
+		forumPostView.addView(contentView);
+		contentView.loadDataWithBaseURL("http://www.teamliquid.net/", BASE_JS + content, "text/html", "UTF-8", null);
 	}
 	
 	private void fetchData(){
@@ -111,8 +121,7 @@ public class ShowMyPMPost extends Activity implements Runnable{
 			TagNode replyURLNode = (TagNode)(msgNode.getParent().getParent().getParent().getParent().evaluateXPath("./a")[0]);
 			replyURL = replyURLNode.getAttributeByName("href");
 			
-			renderUBB = new RenderUBB(this, msgNode);
-			renderUBB.render();
+			content = cleaner.getInnerHtml(msgNode);
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

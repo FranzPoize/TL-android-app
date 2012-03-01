@@ -21,7 +21,7 @@
  */
 package org.opensourcetlapp.tl.widget;
 
-import org.opensourcetlapp.tl.ShowPost;
+import org.opensourcetlapp.tl.ShowThread;
 
 import android.content.Context;
 import android.content.Intent;
@@ -43,7 +43,7 @@ public class DisplayableLinkSpan extends ClickableSpan{
 		// Figure out what to do with the url
 		assert(isDisplayable(url));
 		if (url.contains("viewmessage.php") || url.contains("viewblog.php")){
-			Intent intent = new Intent().setClass(context, ShowPost.class);
+			Intent intent = new Intent().setClass(context, ShowThread.class);
 			intent.putExtra("postURL", url);
 			context.startActivity(intent);
 		}

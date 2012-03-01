@@ -24,9 +24,12 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 public class MytlnetFragment extends Fragment implements Runnable {
 	private Button loginButton;
+	private Button logoutButton;
 	private EditText usernameEditText;
 	private EditText passwordEditText;
 	private ProgressDialog progressDialog;
@@ -35,14 +38,15 @@ public class MytlnetFragment extends Fragment implements Runnable {
 	private Button postsButton;
 	private Button pmButton;
 	private CheckBox rememberMeCheckBox;
+	private ViewGroup container;
 	private DBHelper db;
 	private MytlnetFragment instance;
+	private LinearLayout loggedInView;
+	private LinearLayout loggedOutView;
 
     @Override 
     public void onConfigurationChanged(Configuration newConfig) { 
         super.onConfigurationChanged(newConfig);
-        //---code to redraw your activity here---
-        //...
     }
     
     
@@ -50,18 +54,48 @@ public class MytlnetFragment extends Fragment implements Runnable {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		this.container = container;
 		View view = inflater.inflate(R.layout.mytlnet,container,false);
 		
 		db = new DBHelper(getActivity());
+		
+		loggedInView = (LinearLayout) view.findViewById(R.id.loggedIn);
+		loggedOutView = (LinearLayout) view.findViewById(R.id.loggedOut);
 
 		loginButton = (Button) view.findViewById(R.id.loginButton);
+		logoutButton = (Button) view.findViewById(R.id.logoutButton);
 		usernameEditText = (EditText) view.findViewById(R.id.username);
 		passwordEditText = (EditText) view.findViewById(R.id.password);
 		context = getActivity();
 		setLoginListner();
 		
 		instance = this;
-
+		
+		logoutButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				TLLib.logout();
+				setLoggedOut();
+				setLoginListner();
+				loggedInView.setVisibility(LinearLayout.GONE);
+				loggedOutView.setVisibility(LinearLayout.VISIBLE);
+			}
+		});
+		
+		loginButton.setText("Login");
+		Typeface tf = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL);
+		loginButton.setTypeface(tf);
+		loginButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				setLoggedIn();
+				progressDialog = ProgressDialog.show(getActivity(), null,
+						"Logging in...", true, true);
+				handler = new LoginHandler(progressDialog, context);
+				new Thread((Runnable) instance).start();
+			}
+		});
+		
 		pmButton = (Button)view.findViewById(R.id.pmButton);
 		pmButton.setOnClickListener(new View.OnClickListener() {			
 			@Override
@@ -180,31 +214,7 @@ public class MytlnetFragment extends Fragment implements Runnable {
 	}
 
 	private void setLoginListner() {
-		loginButton.setText("Login");
-		Typeface tf = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL);
-		loginButton.setTypeface(tf);
-		loginButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				setLoggedIn();
-				progressDialog = ProgressDialog.show(getActivity(), null,
-						"Logging in...", true, true);
-				handler = new LoginHandler(progressDialog, context);
-				new Thread((Runnable) instance).start();
-			}
-		});
-	}
-
-	private void setLogoutListener() {
-		loginButton.setText("Logout");
-		loginButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				TLLib.logout();
-				setLoggedOut();
-				setLoginListner();
-			}
-		});
+		
 	}
 	
 	private void setLoggedIn(){
@@ -219,7 +229,6 @@ public class MytlnetFragment extends Fragment implements Runnable {
 		passwordEditText.setEnabled(true);
 		postsButton.setEnabled(false);
 		pmButton.setEnabled(false);
-		loginButton.setText("Login");
 	}
 
 	private class LoginHandler extends TLHandler {
@@ -232,7 +241,9 @@ public class MytlnetFragment extends Fragment implements Runnable {
 			if (msg.what == 0 && this.progressStatus == TLHandler.PROGRESS_OKAY) {
 				progressDialog.dismiss();
 			} else if (msg.what == 1) {
-				setLogoutListener();
+				loggedOutView.setVisibility(LinearLayout.GONE);
+				loggedInView.setVisibility(LinearLayout.VISIBLE);
+				buildLoggedInView();
 			} else if (msg.what == 2) {
 				setLoggedOut();
 				AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
@@ -244,15 +255,16 @@ public class MytlnetFragment extends Fragment implements Runnable {
 				alertDialogBuilder.show();
 
 			} else if (msg.what == 3) {
-				setLoggedOut();
-
+				setLoggedOut();				
 			} else {
 				super.handleMessage(msg);
 			}
 		}
 	}
 
-
+	private void buildLoggedInView() {
+		((TextView)loggedInView.findViewById(R.id.usernameText)).setText(usernameEditText.getText());
+	}
 
 	@Override
 	public void run() {

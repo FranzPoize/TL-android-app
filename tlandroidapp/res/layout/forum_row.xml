@@ -3,12 +3,11 @@
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:layout_width="fill_parent"
   android:layout_height="wrap_content"
-  android:orientation="vertical">
+  android:orientation="horizontal">
 	<LinearLayout 
-	    android:layout_width="fill_parent"
-  		android:layout_height="5dp"
-  		android:id="@+id/typeLine"
-  		android:layout_marginLeft="10dp"></LinearLayout>
+	    android:layout_width="10dp"
+  		android:layout_height="fill_parent"
+  		android:id="@+id/typeLine"></LinearLayout>
 	<LinearLayout
 		xmlns:android="http://schemas.android.com/apk/res/android"
 		android:layout_width="fill_parent"

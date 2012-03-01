@@ -31,42 +31,22 @@ import org.opensourcetlapp.tl.R;
 import com.viewpagerindicator.TitlePageIndicator;
 import com.viewpagerindicator.TitleProvider;
 
-
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
-import android.content.Context;
-import android.content.Intent;
 import android.content.res.Configuration;
-import android.database.Cursor;
-import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Message;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.view.KeyEvent;
-import android.view.MotionEvent;
-import android.view.View;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.EditText;
-import android.widget.SimpleCursorAdapter;
 
 public class main extends FragmentActivity{
 	private ViewPager mViewPager;  
     private TLPagerAdapter mTLPagerAdapter;
     
-    @Override 
-    public void onConfigurationChanged(Configuration newConfig) { 
-        super.onConfigurationChanged(newConfig); 
-        //---code to redraw your activity here---
-        //...
-    }
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -78,7 +58,7 @@ public class main extends FragmentActivity{
 		mTLPagerAdapter = new TLPagerAdapter(getSupportFragmentManager());
 		mViewPager.setAdapter(mTLPagerAdapter);
 		indicator.setViewPager(mViewPager);
-
+		mViewPager.setCurrentItem(1, false);
 	}
 	
 	private static class TLPagerAdapter extends FragmentPagerAdapter implements TitleProvider {  
@@ -86,9 +66,11 @@ public class main extends FragmentActivity{
 		
 		private static String MYTLNET_SUBTITLE = "MyTLnet";
 		private static String FORUM_SUBTITLE = "Forums";
+		private static String SEARCH_SUBTITLE = "Search";
 		
 		private static String[] titles = new String[]
 	    {
+			SEARCH_SUBTITLE,
 			MYTLNET_SUBTITLE,
 			FORUM_SUBTITLE,
 	    };
@@ -96,6 +78,9 @@ public class main extends FragmentActivity{
         public TLPagerAdapter(FragmentManager fm) {  
              super(fm);
              pages = new ArrayList<Fragment>();
+             Fragment searchTL = new SearchFragment();
+             searchTL.setHasOptionsMenu(true);
+             pages.add(searchTL);
              Fragment mytlnet = new MytlnetFragment();
              mytlnet.setHasOptionsMenu(true);
              pages.add(mytlnet);

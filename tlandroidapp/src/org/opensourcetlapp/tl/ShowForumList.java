@@ -78,6 +78,7 @@ public class ShowForumList extends ListFragment implements Runnable  {
 	private Cursor forumsCursor;
 	private static final int PROGRESS_DIALOG_KEY = 1;
 	boolean seeHidden = false;
+	private boolean rendered = false;
 	
 	private Context context;
 	
@@ -105,6 +106,8 @@ public class ShowForumList extends ListFragment implements Runnable  {
 		db = new DBHelper(getActivity());
 		context = getActivity();
 		instance = this;
+		
+		doThreadStuff();
 		
 		return view;
 	}
@@ -228,10 +231,13 @@ public class ShowForumList extends ListFragment implements Runnable  {
 	}
 	
 	private void doThreadStuff(){ // Find a better name
-		progressDialog = ProgressDialog.show(getActivity(), null, "Loading forum list...", true, true);
-		handler = new MainTLHandler(progressDialog, getActivity());
-		Thread thread = new Thread(this);
-		thread.start();
+		if (!rendered) {
+			progressDialog = ProgressDialog.show(getActivity(), null, "Loading forum list...", true, true);
+			handler = new MainTLHandler(progressDialog, getActivity());
+			Thread thread = new Thread(this);
+			thread.start();
+			rendered = true;
+		}
 	}
 	
 	private class MainTLHandler extends TLHandler {
@@ -257,7 +263,6 @@ public class ShowForumList extends ListFragment implements Runnable  {
 	@Override
 	public void onResume() {
 		super.onResume();
-		doThreadStuff();
 		registerForContextMenu(getListView());
 	};
 	

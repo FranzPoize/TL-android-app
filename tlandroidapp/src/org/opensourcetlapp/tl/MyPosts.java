@@ -26,19 +26,15 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPatherException;
 import org.opensourcetlapp.tl.R;
-import org.opensourcetlapp.tl.Adapters.ForumAdapter;
 import org.opensourcetlapp.tl.Adapters.MyPostsAdapter;
 import org.opensourcetlapp.tl.Structs.PostInfo;
 
-
-import android.app.Activity;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -46,7 +42,6 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Message;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -159,7 +154,7 @@ public class MyPosts extends ListActivity implements Runnable {
 		String postTopic = postInfo.topicString;
 		boolean postLocked = postInfo.locked;
 		
-		Intent intent = new Intent().setClass(this, ShowPost.class);
+		Intent intent = new Intent().setClass(this, ShowThread.class);
 		intent.putExtra("postURL", postURL);
 		intent.putExtra("postTopic", postTopic);
 		intent.putExtra("postLocked", false);

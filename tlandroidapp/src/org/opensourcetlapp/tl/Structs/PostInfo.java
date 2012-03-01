@@ -22,20 +22,18 @@
 
 package org.opensourcetlapp.tl.Structs;
 
-import java.io.IOException;
 import java.util.List;
 
-import org.htmlcleaner.SimpleXmlSerializer;
 import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPatherException;
-import org.htmlcleaner.XmlSerializer;
 import org.opensourcetlapp.tl.HtmlTools;
 
 
-import android.text.Html;
-import android.util.Log;
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.support.v4.os.ParcelableCompat;
 
-public class PostInfo {
+public class PostInfo implements Parcelable {
 	public String topicURL;
 	public String topicString;
 	public String topicStarterString;
@@ -46,6 +44,20 @@ public class PostInfo {
 	public boolean locked;
 	
 	private static StringBuilder	sb;
+	
+	public PostInfo(Parcel source) {
+		this.topicURL = source.readString();
+		this.topicString = source.readString();
+		this.topicStarterString = source.readString();
+		this.repliesString = source.readString();
+		this.viewsString = source.readString();
+		this.lastMessageString = source.readString(); 
+		this.imageString = source.readString();
+	}
+	
+	public PostInfo() {
+	}
+	
 	public static PostInfo buildPostInfoFromForumEntry(TagNode entry) throws XPatherException{
 		PostInfo postInfo = new PostInfo();
 		
@@ -76,4 +88,33 @@ public class PostInfo {
 		postInfo.lastMessageString = ((TagNode)lastMessageTagNode).getChildren().get(0).toString();
 		return postInfo;
 	}
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+	@Override
+	public void writeToParcel(Parcel dest, int flags) {
+		dest.writeString(topicURL);
+		dest.writeString(topicString);
+		dest.writeString(topicStarterString);
+		dest.writeString(repliesString);
+		dest.writeString(viewsString);
+		dest.writeString(lastMessageString); 
+		dest.writeString(imageString);
+	}
+	
+	public static final Parcelable.Creator<PostInfo> CREATOR = new Parcelable.Creator<PostInfo>()
+	{
+	    @Override
+	    public PostInfo createFromParcel(Parcel source)
+	    {
+	        return new PostInfo(source);
+	    }
+	 
+	    @Override
+	    public PostInfo[] newArray(int size)
+	    {
+	    return new PostInfo[size];
+	    }
+	};
 }

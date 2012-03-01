@@ -11,9 +11,12 @@ import org.htmlcleaner.XPatherException;
 import org.opensourcetlapp.tl.Structs.PostInfo;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -22,12 +25,17 @@ import android.text.Html;
 import android.text.InputFilter.LengthFilter;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -66,6 +74,11 @@ public class ShowThread extends Activity implements Runnable {
 	private LayoutInflater mInflater;
 	
 	private LinearLayout container;
+	
+	private Dialog gotoPageDialog;
+	private EditText gotoPageEditText;
+	private Button gotoPageButton;
+	private Button gotoPageCancelButton;
 	
 	/**
 	 *  pattern of different html elements we want to parse 
@@ -242,7 +255,7 @@ public class ShowThread extends Activity implements Runnable {
 				TagNode firstTd = (TagNode)((TagNode)postTr[1]).getChildren().get(0);
 				boolean type = (firstTd.getAttributeByName("class").equals("forumPost"));
 				
-				postData.setContent(BASE_JS + cleaner.getInnerHtml(((TagNode)content.evaluateXPath("//td[@class='forumPost']")[0]))/*.replaceAll("src=\"/", "src=\"http://www.teamliquid.net/")*/);
+				postData.setContent(BASE_JS + cleaner.getInnerHtml(((TagNode)content.evaluateXPath("//td[@class='forumPost']")[0])));
 				
 				postData.buildHeader(type,header);
 				
@@ -439,40 +452,54 @@ public class ShowThread extends Activity implements Runnable {
 					String[] infos = null;
 					
 					if (node.getChildren().size() > 2 && ((TagNode)node.getChildren().get(1)).getName().equals("img")) {
+						/** Depending on the size on the header get the poster and the country/date string */
 						if (node.getChildren().size() > 6) {
+						
 							Object[] nodeInfos = node.getChildren().toArray();
+							
 							if (!((TagNode)nodeInfos[3]).getName().equals("img"))
 								this.setPoster(((TagNode)nodeInfos[3]).getChildren().get(0).toString());
 							else
 								this.setPoster(((ContentNode)nodeInfos[2]).toString().replaceAll("&nbsp;", ""));
+							
 							this.setCountryDate(((ContentNode)nodeInfos[6]).toString().replaceAll("&nbsp;", ""));
 						} else if (node.getChildren().size() > 5) {
 							Object[] nodeInfos = node.getChildren().toArray();
+							
 							this.setPoster(((TagNode)nodeInfos[3]).getChildren().get(0).toString());
 							this.setCountryDate(((TagNode)nodeInfos[5]).toString().replaceAll("&nbsp;", ""));
+							
 						} else if (node.getChildren().size() > 4) {
 							Object[] nodeInfos = node.getChildren().toArray();
 							if(TLLib.loginStatus) {
-								this.setPoster(((TagNode)nodeInfos[3]).getChildren().get(0).toString());
+								if (((TagNode)nodeInfos[3]).getName().equals("img"))
+									this.setPoster(((ContentNode)nodeInfos[2]).toString().replaceAll("&nbsp;", ""));
+								else
+									this.setPoster(((TagNode)nodeInfos[3]).getChildren().get(0).toString());
 								this.setCountryDate(((ContentNode)nodeInfos[4]).toString().replaceAll("&nbsp;", ""));
 							} else {
 								this.setPoster(((ContentNode)nodeInfos[2]).toString().replaceAll("&nbsp;", ""));
 								this.setCountryDate(((ContentNode)nodeInfos[4]).toString().replaceAll("&nbsp;", ""));
 							}
 						} else {
+							
 							infos = node.getChildren().get(2).toString().split("&nbsp;");
 							this.setPoster(infos[1]);
 							this.setCountryDate(infos[2]);
 						}
 						
 					} else {
+						/** special for PoP */
 						this.setPoster("Pop!");
 						this.setCountryDate(node.getChildren().get(0).toString().replaceAll("&nbsp;", ""));
 					}
 					
 					Object[] links = ((TagNode)post.getChildren().get(1)).evaluateXPath("//a");
-					if (TLLib.loginStatus && links.length > 2) {
-						postId = ((TagNode)links[links.length - 2]).getAttributeByName("href").split("\\?")[1].split("&")[0].split("=")[1];
+					
+					for(int i = 0; i< links.length;i++) {
+						if (((TagNode)links[i]).getChildren().get(0).toString().equals("Quote")) {
+							postId = ((TagNode)links[i]).getAttributeByName("href").split("\\?")[1].split("&")[0].split("=")[1];
+						}
 					}
 				} else {
 					this.setTitle(((TagNode)((TagNode)((TagNode)post.evaluateXPath("//td")[0]).getChildren().get(2)).getChildren().get(1)).getChildren().get(0).toString());
@@ -546,5 +573,109 @@ public class ShowThread extends Activity implements Runnable {
 		public void setCountryDate(String countryDate) {
 			this.countryDate = countryDate;
 		}
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.show_post_menu, menu);
+		return true;
+	}
+	
+	private void showGotoPageDialog(){
+		if (gotoPageDialog == null){
+			gotoPageDialog = new Dialog(this);
+			gotoPageDialog.setContentView(R.layout.goto_page_popup);
+			gotoPageDialog.setCancelable(true);
+			gotoPageDialog.setTitle(String.format("Enter page number (%d %s)", lastPage, lastPage==1?"page":"pages"));
+			
+			gotoPageButton = (Button) gotoPageDialog.findViewById(R.id.gotoPageButton);
+			gotoPageCancelButton = (Button) gotoPageDialog.findViewById(R.id.gotoPageCancelButton);
+			gotoPageEditText = (EditText) gotoPageDialog.findViewById(R.id.gotoPageEditText);
+			
+			gotoPageButton.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					try {
+						int pageNumber = Integer.parseInt(gotoPageEditText.getText().toString());
+						if (pageNumber < 1){
+							AlertDialog.Builder builder = new AlertDialog.Builder(context);
+							builder.setMessage("Page number must be greater than 0.")
+							       .setCancelable(false)
+							       .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+							           public void onClick(DialogInterface dialog, int id) {
+							           
+							           }
+							       });
+							AlertDialog alert = builder.create();
+							alert.show();
+						} else if (pageNumber > lastPage){
+							AlertDialog.Builder builder = new AlertDialog.Builder(context);
+							builder.setMessage("Page number must be no greater than " +lastPage)
+							       .setCancelable(false)
+							       .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+							           public void onClick(DialogInterface dialog, int id) {
+							           
+							           }
+							       });
+							AlertDialog alert = builder.create();
+							alert.show();
+						}
+						
+						else {
+							loadPostURL(buildPostURL(pageNumber));
+							gotoPageDialog.dismiss();
+						}
+					} catch (NumberFormatException e){
+						
+					}
+				}
+			});
+		}
+		
+		gotoPageCancelButton.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				gotoPageDialog.dismiss();
+			}
+		});
+		gotoPageEditText.setText("");
+		gotoPageDialog.show();
+	}
+	
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.gotoPage:
+			showGotoPageDialog();
+			break;
+		case R.id.refresh:
+			refresh(false);
+			break;
+		case R.id.reply:
+			if (!TLLib.loginStatus){
+				AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
+				alertDialogBuilder.setTitle("Login Error");
+				alertDialogBuilder.setMessage("Please Login before posting.\n");
+				alertDialogBuilder.setPositiveButton("Okay", null);
+				alertDialogBuilder.show();
+			}
+			else if (postLocked){
+				AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
+				alertDialogBuilder.setTitle("Thread Closed");
+				alertDialogBuilder.setMessage("This thread has been locked by a Moderator.");
+				alertDialogBuilder.setPositiveButton("Okay", null);
+				alertDialogBuilder.show();
+			}
+			else {
+				Intent intent = new Intent().setClass(this, PostMessage.class);
+				intent.putExtra("topicId", topicId);
+				startActivity(intent);
+			}
+		break;
+		}
+
+		return true;
+
 	}
 }

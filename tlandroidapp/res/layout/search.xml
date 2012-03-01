@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical">
+    	<RelativeLayout 
+    	    android:background="@color/TLBlue3"
+    	    android:layout_width="fill_parent"
+		    android:layout_height="60dp"
+		    android:orientation="horizontal"
+		    android:padding="10dp"
+		    android:id="@+id/searchFragment">
+		    	<LinearLayout  
+			        android:layout_width="40dp"
+			    	android:layout_height="40dp"
+			        android:paddingRight="15dp"
+			        android:layout_toLeftOf="@+id/search"
+			        style="@android:style/Widget.ProgressBar.Small.Inverse"> 
+		    	<ProgressBar 
+			        android:id="@+id/progressBar"
+			        android:layout_width="fill_parent"
+			    	android:layout_height="fill_parent"
+			        android:indeterminateOnly="true" 
+			        style="@android:style/Widget.ProgressBar.Small.Inverse"
+			        android:visibility="invisible"/>
+		    	</LinearLayout>
+    	    	<EditText
+    	    	    android:paddingLeft="5dp"
+					android:id="@+id/search"
+					android:layout_centerInParent="true"
+					android:layout_width="240dp"
+					android:layout_height="34dp"
+					android:hint="Search..."
+					android:textSize="20dp"
+					android:singleLine="true"
+					android:background="@drawable/rounded_edittext"/>
+    	</RelativeLayout>
+    	<ListView 
+    	    android:id="@id/android:list" 
+    	    android:layout_width="fill_parent"
+			android:layout_height="wrap_content" 
+			android:layout_weight="1"
+			android:drawSelectorOnTop="false"
+			android:background = "@color/TLBlue"/>
+</LinearLayout>

@@ -64,7 +64,7 @@ public class ShowMyPMReply extends Activity implements Runnable {
 	private static final int SEND_MESSAGE = 1;
 	private int state = FETCH_DATA;
 	
-	public static final String PARSE_NODE = "<table width='505' cellpadding='2' cellspacing='0' border='0' style='border: 1px solid #00005D;'>";
+	public static final String PARSE_NODE = "<table width='647' cellpadding='2' cellspacing='0' border='0' style='border: 1px solid #00005D;'>";
 	
     @Override 
     public void onConfigurationChanged(Configuration newConfig) { 
@@ -119,8 +119,8 @@ public class ShowMyPMReply extends Activity implements Runnable {
 			replymsg = (String)ret[1];
 			
 			Object [] inputTags = node.evaluateXPath("//input");
-			to = ((TagNode)inputTags[0]).getAttributeByName("value");
-			subject = ((TagNode)inputTags[1]).getAttributeByName("value");
+			to = ((TagNode)inputTags[1]).getAttributeByName("value");
+			subject = ((TagNode)inputTags[2]).getAttributeByName("value");
 
 			handler.sendEmptyMessage(TLHandler.PROGRESS_RENDERING);
 		} catch (MalformedURLException e) {

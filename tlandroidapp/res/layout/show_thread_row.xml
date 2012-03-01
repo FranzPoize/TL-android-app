@@ -41,30 +41,21 @@
   		android:layout_height="50dp"
   		android:visibility="gone"
   		android:orientation="horizontal">
-        	<TextView 
+        	<ImageView 
         	    android:id="@+id/pmButton" 
         	    android:layout_width="wrap_content"
   				android:layout_height="fill_parent"
+  				android:src="@drawable/content_new_email"
   				android:gravity="center"
-  				android:textStyle="bold"
   				android:paddingLeft="10dp"
-  				android:paddingRight="10dp"
-        	    android:text="PM" 
-        	    android:textSize="30dp"/>
-        	<LinearLayout
-        	    android:layout_width="2dp"
-  				android:layout_height="fill_parent"
-  				android:background="@color/TLBlueBlack" ></LinearLayout>
-        	<TextView 
-        	    android:layout_width="wrap_content"
-        	    android:paddingLeft="10dp"
-  				android:paddingRight="10dp"
-        	    android:textStyle="bold"
-  				android:layout_height="fill_parent"
+  				android:paddingRight="20dp"/>
+        	<ImageView 
         	    android:id="@+id/quoteButton" 
-        	    android:gravity="center"
-        	    android:text="Quote" 
-        	    android:textSize="30dp"/>
+        	    android:layout_width="wrap_content"
+  				android:layout_height="fill_parent"
+  				android:src="@drawable/content_copy"
+  				android:gravity="center"
+  				android:paddingRight="20dp"/>
     </LinearLayout>
     <WebView 
         android:id="@+id/postContent" 

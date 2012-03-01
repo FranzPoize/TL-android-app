@@ -71,6 +71,7 @@ public class TLLib {
 	private static final String POST_URL = "http://www.teamliquid.net/forum/postmessage.php";
 	private static final String PM_URL = "http://www.teamliquid.net/mytlnet/index.php";
 	private static final String EDIT_URL = "http://www.teamliquid.net/forum/edit.php";
+	private static final String SEARCH_URL = "http://www.teamliquid.net/forum/search.php";
 	private static final String USER_FIELD = "loginname";
 	private static final String PASS_FIELD = "loginpasswd";
 	private static final String REMEMBERME = "makeAcookie";
@@ -355,6 +356,11 @@ public class TLLib {
 	public static TagNode TagNodeFromURLShowForum(HtmlCleaner cleaner, URL url,
 			Handler handler, Context context) throws IOException{
 			return TagNodeFromURLEx2(cleaner, url, handler, context, "<table width=\"747\" class=\"solid\" cellspacing=0>", true);
+	}
+	
+	public static TagNode TagNodeFromURLSearch(HtmlCleaner cleaner, String search,
+			Handler handler, Context context) throws IOException{
+			return TagNodeFromURLEx2(cleaner,new URL(SEARCH_URL+"?q="+search.replaceAll("\\s", "+")), handler, context, "<table cellpadding=\"5\" cellspacing=0 width=\"100%\">", true);
 	}	
 	
 	public static TagNode TagNodeFromURLMyPosts(HtmlCleaner cleaner, URL url,

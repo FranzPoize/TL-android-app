@@ -70,7 +70,7 @@ public class ForumsListCurosrAdapter extends SimpleCursorAdapter {
         if (name_text != null) {
             name_text.setText(name);
             if (c.getInt(mSubForumIndex) == 1) {
-            	name_text.setTextColor(Color.parseColor("#d9dde0"));
+            	name_text.setTextColor(Color.parseColor("#13173E"));
             	int padding_in_dp = 50;
                 final float scale = context.getResources().getDisplayMetrics().density;
                 int padding_in_px = (int) (padding_in_dp * scale + 0.5f);

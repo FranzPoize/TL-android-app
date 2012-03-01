@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="org.opensourcetlapp.tl"
-      android:versionCode="40"
-      android:versionName="BETA 0.3.27">
+      android:versionCode="42"
+      android:versionName="BETA 0.4.27">
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-sdk android:minSdkVersion="3" android:targetSdkVersion="9"/>
+    <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="9"/>
     <application android:icon="@drawable/icon" android:label="@string/app_name" android:theme="@style/TLTheme" android:name=".TLApplication" android:debuggable="true">
         <activity android:name=".main"
          		android:configChanges="keyboardHidden"
