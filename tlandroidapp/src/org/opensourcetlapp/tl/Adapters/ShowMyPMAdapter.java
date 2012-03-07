@@ -51,15 +51,12 @@ public class ShowMyPMAdapter extends BaseAdapter{
 		public TextView from;
 		public TextView subject;
 		public TextView date;
-	}
-	
+	}	
+	private static final String TAG = "ForumAdapter";
+	private static final String UNREAD = "R";
 	private LayoutInflater mInflater;
-
 	private List <PMInfo>pmInfoList;
 	private Context context;
-	
-	private static final String UNREAD = "R";
-	private static final String TAG = "ForumAdapter";
 	
 	public ShowMyPMAdapter(List <PMInfo>pmInfoList, Context context){
 		this.pmInfoList = pmInfoList;
@@ -104,14 +101,17 @@ public class ShowMyPMAdapter extends BaseAdapter{
 			holder = (ViewHolder) convertView.getTag();
 		}
 		
-		convertView.findViewById(R.id.PMNew).setVisibility(LinearLayout.GONE);
-		convertView.findViewById(R.id.PMOld).setVisibility(LinearLayout.GONE);
-		if (postInfo.read.equals(UNREAD))
+		if (postInfo.read.equals(UNREAD)) {
 			convertView.findViewById(R.id.PMNew).setVisibility(LinearLayout.VISIBLE);
-		else
+			convertView.findViewById(R.id.PMOld).setVisibility(LinearLayout.GONE);
+		}
+		else {
+			convertView.findViewById(R.id.PMNew).setVisibility(LinearLayout.GONE);
 			convertView.findViewById(R.id.PMOld).setVisibility(LinearLayout.VISIBLE);
+		}
 		holder.from.setText(postInfo.from);
 		holder.subject.setText(postInfo.subject);
+		holder.date.setText(postInfo.date);
 
 		return convertView;
 	}
