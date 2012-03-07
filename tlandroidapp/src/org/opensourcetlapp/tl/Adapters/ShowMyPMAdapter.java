@@ -34,17 +34,20 @@ import org.opensourcetlapp.tl.Structs.PostInfo;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 public class ShowMyPMAdapter extends BaseAdapter{
 	private class ViewHolder {
+		public ImageView PM;
 		public TextView from;
 		public TextView subject;
 		public TextView date;
@@ -55,6 +58,7 @@ public class ShowMyPMAdapter extends BaseAdapter{
 	private List <PMInfo>pmInfoList;
 	private Context context;
 	
+	private static final String UNREAD = "R";
 	private static final String TAG = "ForumAdapter";
 	
 	public ShowMyPMAdapter(List <PMInfo>pmInfoList, Context context){
@@ -84,7 +88,8 @@ public class ShowMyPMAdapter extends BaseAdapter{
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		ViewHolder holder;
-		
+		PMInfo postInfo = pmInfoList.get(position);
+				
 		if (convertView == null){
 			convertView = mInflater.inflate(R.layout.my_pm_row, null);
 			
@@ -99,11 +104,14 @@ public class ShowMyPMAdapter extends BaseAdapter{
 			holder = (ViewHolder) convertView.getTag();
 		}
 		
-		PMInfo postInfo = pmInfoList.get(position);
-
+		convertView.findViewById(R.id.PMNew).setVisibility(LinearLayout.GONE);
+		convertView.findViewById(R.id.PMOld).setVisibility(LinearLayout.GONE);
+		if (postInfo.read.equals(UNREAD))
+			convertView.findViewById(R.id.PMNew).setVisibility(LinearLayout.VISIBLE);
+		else
+			convertView.findViewById(R.id.PMOld).setVisibility(LinearLayout.VISIBLE);
 		holder.from.setText(postInfo.from);
 		holder.subject.setText(postInfo.subject);
-		holder.date.setText(postInfo.date);	
 
 		return convertView;
 	}

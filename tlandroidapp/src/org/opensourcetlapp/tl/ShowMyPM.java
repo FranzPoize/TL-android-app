@@ -103,22 +103,28 @@ public class ShowMyPM extends ListActivity implements Runnable {
 					TagNode subject;
 					TagNode subjectURL;
 					TagNode date;
+					TagNode read;
 					try {
 						from =  (TagNode)(n.evaluateXPath("./td[1]/b"))[0];
 						subjectURL =  (TagNode)(n.evaluateXPath("./td[2]/a"))[0];
 						subject =  (TagNode)(n.evaluateXPath("./td[2]/a/b"))[0];
 						date = (TagNode)(n.evaluateXPath("./td[3]/b"))[0];
+						read = (TagNode)(n.evaluateXPath("./td[4]/a[3]/b"))[0];
 					} catch (ArrayIndexOutOfBoundsException e){
 						from =  (TagNode)(n.evaluateXPath("./td[1]"))[0];
 						subject =  (TagNode)(n.evaluateXPath("./td[2]/a"))[0];
 						subjectURL = subject;
 						date = (TagNode)(n.evaluateXPath("./td[3]"))[0];
+						read = (TagNode)(n.evaluateXPath("./td[4]/a[3]"))[0];
 					}
 					PMInfo pmInfo = new PMInfo();
+					TagNode temp = read;
+					Log.d(TAG, temp.getChildren().iterator().next().toString());
 					pmInfo.from = HtmlTools.unescapeHtml(from.getChildren().iterator().next().toString());
 					pmInfo.subject = HtmlTools.unescapeHtml(subject.getChildren().iterator().next().toString());
 					pmInfo.url = HtmlTools.unescapeHtml(subjectURL.getAttributeByName("href"));
 					pmInfo.date = HtmlTools.unescapeHtml(date.getChildren().iterator().next().toString());
+					pmInfo.read = HtmlTools.unescapeHtml(read.getChildren().iterator().next().toString());
 
 					pmInfoList.add(pmInfo);
 				}

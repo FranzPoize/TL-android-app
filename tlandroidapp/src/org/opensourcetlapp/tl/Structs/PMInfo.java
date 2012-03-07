@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, 2011 Ali Piccioni & Francois Poizat
+ * Copyright 2010, 2011 Ali Piccioni, Francois Poizat & Bill Xu
  *
  * This program is distributed under the terms of the GNU General Public License
  *
@@ -27,4 +27,5 @@ public class PMInfo {
 	public String subject;
 	public String url;
 	public String date;
+	public String read;
 }
