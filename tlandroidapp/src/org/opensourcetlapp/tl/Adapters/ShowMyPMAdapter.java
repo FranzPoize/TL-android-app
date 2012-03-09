@@ -47,13 +47,13 @@ import android.widget.TextView;
 
 public class ShowMyPMAdapter extends BaseAdapter{
 	private class ViewHolder {
-		public ImageView PM;
 		public TextView from;
 		public TextView subject;
 		public TextView date;
-	}	
+	}
+	public static final String READ = "U";
+	public static final String UNREAD = "R";
 	private static final String TAG = "ForumAdapter";
-	private static final String UNREAD = "R";
 	private LayoutInflater mInflater;
 	private List <PMInfo>pmInfoList;
 	private Context context;

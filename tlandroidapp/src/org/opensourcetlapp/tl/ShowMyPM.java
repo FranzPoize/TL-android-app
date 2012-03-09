@@ -118,8 +118,7 @@ public class ShowMyPM extends ListActivity implements Runnable {
 						read = (TagNode)(n.evaluateXPath("./td[4]/a[3]"))[0];
 					}
 					PMInfo pmInfo = new PMInfo();
-					TagNode temp = read;
-					Log.d(TAG, temp.getChildren().iterator().next().toString());
+					
 					pmInfo.from = HtmlTools.unescapeHtml(from.getChildren().iterator().next().toString());
 					pmInfo.subject = HtmlTools.unescapeHtml(subject.getChildren().iterator().next().toString());
 					pmInfo.url = HtmlTools.unescapeHtml(subjectURL.getAttributeByName("href"));
@@ -168,6 +167,10 @@ public class ShowMyPM extends ListActivity implements Runnable {
 	
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		PMInfo pmInfo = pmInfoList.get((int) id);
+		
+		pmInfoList.get((int) id).read = ShowMyPMAdapter.READ; // Message is flagged as read
+		getListView().setAdapter(new ShowMyPMAdapter(pmInfoList, context));
+		
 		String url = pmInfo.url;
 		String from = pmInfo.from;
 		String subject = pmInfo.subject;

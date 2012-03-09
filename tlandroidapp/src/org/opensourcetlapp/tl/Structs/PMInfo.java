@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, 2011 Ali Piccioni, Francois Poizat & Bill Xu
+ * Copyright 2010, 2011 Ali Piccioni & Francois Poizat
  *
  * This program is distributed under the terms of the GNU General Public License
  *
