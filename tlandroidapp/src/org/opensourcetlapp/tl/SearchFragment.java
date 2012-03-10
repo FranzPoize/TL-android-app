@@ -94,6 +94,9 @@ public class SearchFragment extends ListFragment implements Runnable {
 			} catch (XPatherException e) {
 				Log.d("SearchFragment", "couldn't retrieve results tables");
 				e.printStackTrace();
+			} catch (ArrayIndexOutOfBoundsException e) {
+				Log.d("SearchFragment", "no results table");
+				e.printStackTrace();
 			}
 			
 			handler.sendEmptyMessage(0);
