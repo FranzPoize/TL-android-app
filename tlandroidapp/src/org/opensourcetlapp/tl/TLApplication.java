@@ -28,7 +28,7 @@ import android.util.Log;
 public class TLApplication extends Application {
 
 	@Override
-	public void onCreate(){
+	public void onCreate() {
 		super.onCreate();
 		Log.d("TLApplication", "Hello from TLApplication");
 	}

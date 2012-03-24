@@ -26,6 +26,7 @@ import org.opensourcetlapp.tl.R;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -38,6 +39,12 @@ public class Settings extends Activity {
 	
 	private CheckBox disableSmartParsingCheckBox;
 	private CheckBox viewAllCheckBox;
+	
+	@Override 
+    public void onConfigurationChanged(Configuration newConfig) { 
+        super.onConfigurationChanged(newConfig); 
+    }
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);

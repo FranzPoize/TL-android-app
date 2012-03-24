@@ -19,6 +19,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Message;
 import android.text.Html;
@@ -85,6 +86,11 @@ public class ShowThread extends Activity implements Runnable {
 	 */
 	private static final String PARSE_NODE =  "<table width=\"742\" cellspacing=\"0\" cellpadding=\"0\">";
 	private static final String FORUM_XPATH = "//table[@width='742']";
+	
+	@Override 
+    public void onConfigurationChanged(Configuration newConfig) { 
+        super.onConfigurationChanged(newConfig); 
+    }
 	
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);

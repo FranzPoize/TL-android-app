@@ -77,12 +77,12 @@ public class ShowForumList extends ListFragment implements Runnable  {
 	private DBHelper db;
 	private Cursor forumsCursor;
 	private static final int PROGRESS_DIALOG_KEY = 1;
-	boolean seeHidden = false;
+	private boolean seeHidden = false;
 	private boolean rendered = false;
 	
 	private Context context;
 	
-	ProgressDialog progressDialog;
+	private ProgressDialog progressDialog;
 	
 	private static final String [] HARD_CODED_FORUM_NAMES = {};
 	private static final String [] HARD_CODED_FORUM_URLS = {};
@@ -94,8 +94,6 @@ public class ShowForumList extends ListFragment implements Runnable  {
     @Override 
     public void onConfigurationChanged(Configuration newConfig) { 
         super.onConfigurationChanged(newConfig); 
-        //---code to redraw your activity here---
-        //...
     }
 	
 	/** Called when the activity is first created. */

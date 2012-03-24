@@ -13,6 +13,7 @@ import org.opensourcetlapp.tl.Structs.PostInfo;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -44,7 +45,10 @@ public class SearchFragment extends ListFragment implements Runnable {
 	private boolean mInstanceAlreadySaved;
     private Bundle mSavedOutState;
 	
-	
+    @Override 
+    public void onConfigurationChanged(Configuration newConfig) { 
+        super.onConfigurationChanged(newConfig);
+    }
 
 	@Override
 	public void onSaveInstanceState(Bundle outState) {

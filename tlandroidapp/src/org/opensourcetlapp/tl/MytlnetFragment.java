@@ -49,8 +49,6 @@ public class MytlnetFragment extends Fragment implements Runnable {
         super.onConfigurationChanged(newConfig);
     }
     
-    
-
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);

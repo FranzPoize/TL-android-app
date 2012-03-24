@@ -43,6 +43,11 @@ public class main extends FragmentActivity{
 	private ViewPager mViewPager;  
     private TLPagerAdapter mTLPagerAdapter;
     
+    @Override 
+    public void onConfigurationChanged(Configuration newConfig) { 
+        super.onConfigurationChanged(newConfig); 
+    }
+    
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);

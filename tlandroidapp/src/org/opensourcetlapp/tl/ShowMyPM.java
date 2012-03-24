@@ -65,8 +65,6 @@ public class ShowMyPM extends ListActivity implements Runnable {
     @Override 
     public void onConfigurationChanged(Configuration newConfig) { 
         super.onConfigurationChanged(newConfig); 
-        //---code to redraw your activity here---
-        //...
     }
 	
 	@Override

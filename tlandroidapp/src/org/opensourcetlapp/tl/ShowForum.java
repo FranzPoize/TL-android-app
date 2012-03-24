@@ -64,7 +64,6 @@ public class ShowForum extends ListActivity implements Runnable{
 	private int pageNumber = 1;
 	private int forumCode;
 	
-	
 	private ProgressDialog progressDialog;
 	private HtmlCleaner cleaner;
 	private static TagNode node;
@@ -82,8 +81,6 @@ public class ShowForum extends ListActivity implements Runnable{
     @Override 
     public void onConfigurationChanged(Configuration newConfig) { 
         super.onConfigurationChanged(newConfig); 
-        //---code to redraw your activity here---
-        //...
     }
     
     private void parseForumCode(){

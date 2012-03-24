@@ -58,11 +58,10 @@ public class EditPost extends Activity  {
 	private Button postButton;
 	private Context context;
 	private static final String baseURL = "forum/edit.php?action=edit";
-    @Override 
+    
+	@Override 
     public void onConfigurationChanged(Configuration newConfig) { 
         super.onConfigurationChanged(newConfig); 
-        //---code to redraw your activity here---
-        //...
     }
     
     @Override
