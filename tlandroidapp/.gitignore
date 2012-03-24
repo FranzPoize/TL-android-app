@@ -8,3 +8,4 @@ bin/*
 /gen
 /bin
 /changelog
+/.classpath

@@ -27,4 +27,5 @@ public class PMInfo {
 	public String subject;
 	public String url;
 	public String date;
+	public String read;
 }
