@@ -89,8 +89,13 @@ public class ShowMyPM extends ListActivity implements Runnable {
 		try {
 			TagNode node = TLLib.TagNodeFromURLEx2(cleaner, new URL(url), handler, context, PARSE_NODE, true);
 			handler.sendEmptyMessage(TLHandler.PROGRESS_RENDERING);
-
-			Object [] nodeList = node.evaluateXPath("//tbody/tr[position()>2]");
+			Object [] nodeList = null;
+			if (((TagNode)node.evaluateXPath("//tbody/tr[position()>2]")[0]).getChildren().size() > 3) {
+				nodeList = node.evaluateXPath("//tbody/tr[position()>2]");
+			} else {
+				nodeList = node.evaluateXPath("//tbody/tr[position()>3]");
+			}
+			
 			Log.d(TAG, "NodeList Length: "+ nodeList.length);
 			
 			TagNode n;
