@@ -44,6 +44,7 @@ public class SearchFragment extends ListFragment implements Runnable {
 	
 	private boolean mInstanceAlreadySaved;
     private Bundle mSavedOutState;
+    private String searchType = "t"; // default; t => title, c => content, ct => title and content
 	
     @Override 
     public void onConfigurationChanged(Configuration newConfig) { 
@@ -59,7 +60,7 @@ public class SearchFragment extends ListFragment implements Runnable {
 
 	public void run() {
 		try {
-			TagNode response = TLLib.TagNodeFromURLSearch(new HtmlCleaner(),search.getText().toString(),handler,getActivity());
+			TagNode response = TLLib.TagNodeFromURLSearch(new HtmlCleaner(),search.getText().toString()+"&t="+searchType, handler,getActivity());
 			Object[] tableResults = null;
 			Object[] nodeList = null;
 			try {
@@ -195,5 +196,28 @@ public class SearchFragment extends ListFragment implements Runnable {
 		intent.putExtra("postTopic", postTopic);
 		intent.putExtra("postLocked", false);
 		startActivity(intent);
+	}
+	
+	@Override
+	public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
+		menuInflater.inflate(R.menu.search_menu, menu);
+	}
+	
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+        case R.id.title:
+        	searchType = "t";
+        case R.id.content:
+        	searchType = "c";
+        case R.id.both:
+        	searchType = "ct";
+        	if (item.isChecked())
+        		item.setChecked(false);
+            else
+            	item.setChecked(true);
+        	return true;
+        default:
+            return super.onOptionsItemSelected(item);
+        }
 	}
 }

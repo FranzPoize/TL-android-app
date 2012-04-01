@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <group android:checkableBehavior="single" >
+
+        <item
+            android:id="@+id/title"
+            android:checked="true"
+            android:title="Title"/>
+
+        <item
+            android:id="@+id/content"
+            android:title="Content"/>
+
+        <item
+            android:id="@+id/both"
+            android:title="Title and Content"/>
+    </group>
+
+</menu>
