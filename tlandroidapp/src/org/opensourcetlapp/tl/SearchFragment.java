@@ -12,6 +12,7 @@ import org.opensourcetlapp.tl.Structs.PostInfo;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -32,6 +33,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 public class SearchFragment extends ListFragment implements Runnable {
 	
@@ -45,6 +47,7 @@ public class SearchFragment extends ListFragment implements Runnable {
 	private boolean mInstanceAlreadySaved;
     private Bundle mSavedOutState;
     private String searchType = "t"; // default; t => title, c => content, ct => title and content
+    private EditText username;
 	
     @Override 
     public void onConfigurationChanged(Configuration newConfig) { 
@@ -204,20 +207,43 @@ public class SearchFragment extends ListFragment implements Runnable {
 	}
 	
 	public boolean onOptionsItemSelected(MenuItem item) {
+		Context context = getActivity();
 		switch (item.getItemId()) {
-        case R.id.title:
-        	searchType = "t";
-        case R.id.content:
-        	searchType = "c";
-        case R.id.both:
-        	searchType = "ct";
-        	if (item.isChecked())
-        		item.setChecked(false);
-            else
-            	item.setChecked(true);
-        	return true;
-        default:
-            return super.onOptionsItemSelected(item);
-        }
-	}
+		case R.id.searchBy:
+			final CharSequence[] items = {"Title", "Content", "Title and Content"};
+			
+			AlertDialog.Builder builderRadio = new AlertDialog.Builder(context);
+			builderRadio.setTitle("Search Option");
+			builderRadio.setSingleChoiceItems(items, 0, new DialogInterface.OnClickListener() {
+			    public void onClick(DialogInterface dialog, int id) {
+			    	switch (id) {
+			    	case 0:
+			    		searchType = "t";
+			    		break;
+			    	case 1:
+			    		searchType ="c";
+			    		break;
+			    	case 2:
+			    		searchType = "ct";
+			    	}
+			    }
+			});
+			builderRadio.show();
+			break;
+		case R.id.searchUser:
+			LayoutInflater li = LayoutInflater.from(context);
+			View promptsView = li.inflate(R.layout.search_user_prompt, null);
+			final EditText userInput = (EditText) promptsView.findViewById(R.id.searchUsernameText);
+			
+			AlertDialog.Builder builderInput = new AlertDialog.Builder(context);
+			builderInput.setView(promptsView);	
+			builderInput.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+			    public void onClick(DialogInterface dialog, int id) {
+			    	username.setText(userInput.getText());
+			    }
+			  });
+			builderInput.show();
+		}
+		return true;
+	}	
 }
