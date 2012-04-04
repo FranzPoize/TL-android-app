@@ -46,8 +46,9 @@ public class SearchFragment extends ListFragment implements Runnable {
 	
 	private boolean mInstanceAlreadySaved;
     private Bundle mSavedOutState;
+    private DBHelper db;
     private String searchType = "t"; // default; t => title, c => content, ct => title and content
-    private EditText username;
+    private String username;
 	
     @Override 
     public void onConfigurationChanged(Configuration newConfig) { 
@@ -63,12 +64,13 @@ public class SearchFragment extends ListFragment implements Runnable {
 
 	public void run() {
 		try {
-			TagNode response = TLLib.TagNodeFromURLSearch(new HtmlCleaner(),search.getText().toString()+"&t="+searchType, handler,getActivity());
+			TagNode response = TLLib.TagNodeFromURLSearch(new HtmlCleaner(),search.getText().toString()+"&t="+searchType+(username != null ? "&u="+username : 0), handler,getActivity());
 			Object[] tableResults = null;
 			Object[] nodeList = null;
 			try {
 				tableResults = response.evaluateXPath("//table[@width=748]/tbody");
 				
+				// Add 3 cases here; title, content, title & content //				
 				nodeList = ((TagNode)tableResults[tableResults.length - 2]).evaluateXPath("//tr[position()>1]");
 				
 				TagNode n;
@@ -121,6 +123,7 @@ public class SearchFragment extends ListFragment implements Runnable {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		db = new DBHelper(getActivity());
 		
 		if (null == savedInstanceState && null != mSavedOutState) {
             savedInstanceState = mSavedOutState;
@@ -188,6 +191,12 @@ public class SearchFragment extends ListFragment implements Runnable {
         super.onStop();
     }
 	
+	@Override
+	public void onDestroy(){
+		super.onDestroy();
+		db.close();
+	}
+	
 	public void onListItemClick(ListView l, View v, int position, long id) {
 		PostInfo postInfo = postInfoList.get((int) id);
 		String postURL = "/forum/"+postInfo.topicURL;
@@ -225,10 +234,13 @@ public class SearchFragment extends ListFragment implements Runnable {
 			    		break;
 			    	case 2:
 			    		searchType = "ct";
+			    		break;
 			    	}
+			    	dialog.dismiss();
 			    }
 			});
-			builderRadio.show();
+			AlertDialog alertRadio = builderRadio.create();
+			alertRadio.show();
 			break;
 		case R.id.searchUser:
 			LayoutInflater li = LayoutInflater.from(context);
@@ -239,10 +251,12 @@ public class SearchFragment extends ListFragment implements Runnable {
 			builderInput.setView(promptsView);	
 			builderInput.setPositiveButton("OK", new DialogInterface.OnClickListener() {
 			    public void onClick(DialogInterface dialog, int id) {
-			    	username.setText(userInput.getText());
+			    	username = userInput.getText().toString();
 			    }
 			  });
-			builderInput.show();
+			AlertDialog AlertInput = builderInput.create();
+			AlertInput.show();
+			break;
 		}
 		return true;
 	}	

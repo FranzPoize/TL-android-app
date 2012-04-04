@@ -282,7 +282,12 @@ public class MytlnetFragment extends Fragment implements Runnable {
 		handler.sendEmptyMessage(0);
 	}
 
-
+	@Override
+	public void onDestroy(){
+		super.onDestroy();
+		db.close();
+	}
+	
 	@Override
 	public void onCreateOptionsMenu(Menu menu,MenuInflater menuInflater) {
 		menuInflater.inflate(R.menu.show_forums_menu, menu);
