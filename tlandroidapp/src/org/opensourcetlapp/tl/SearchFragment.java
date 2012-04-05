@@ -64,7 +64,7 @@ public class SearchFragment extends ListFragment implements Runnable {
 
 	public void run() {
 		try {
-			TagNode response = TLLib.TagNodeFromURLSearch(new HtmlCleaner(),search.getText().toString()+"&t="+searchType+(username != null ? "&u="+username : 0), handler,getActivity());
+			TagNode response = TLLib.TagNodeFromURLSearch(new HtmlCleaner(),search.getText().toString()+"&t="+searchType+(username != null ? "&u="+username : ""), handler,getActivity());
 			Object[] tableResults = null;
 			Object[] nodeList = null;
 			try {
@@ -86,6 +86,12 @@ public class SearchFragment extends ListFragment implements Runnable {
 						TagNode topicURL = (TagNode)resourceList[0];
 						
 						String topicURLString = topicURL.getAttributeByName("href");
+						if (searchType == "c") {
+							int postNumber = Integer.parseInt(lastPost.getText().toString());
+							int pageNumber = (postNumber/20) + 1;
+							
+							topicURLString = String.format("%s&currentpage=%d#%d", topicURLString, pageNumber, postNumber);
+						}
 	
 						PostInfo postInfo = new PostInfo();
 						if (topicStarter.getChildren().iterator().hasNext())
