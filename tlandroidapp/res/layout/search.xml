@@ -24,7 +24,7 @@
 			        android:indeterminateOnly="true" 
 			        style="@android:style/Widget.ProgressBar.Small.Inverse"
 			        android:visibility="invisible"/>
-		    	</LinearLayout>
+		    	</LinearLayout>		    	
     	    	<EditText
     	    	    android:paddingLeft="5dp"
 					android:id="@+id/search"

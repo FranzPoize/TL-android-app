@@ -29,10 +29,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnKeyListener;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class SearchFragment extends ListFragment implements Runnable {
@@ -42,12 +44,14 @@ public class SearchFragment extends ListFragment implements Runnable {
 	ProgressBar progressBar;
 	SearchHandler handler;
 	ArrayList<PostInfo> postInfoList = new ArrayList<PostInfo>();
+	ArrayList<PostInfo> postInfoList2 = new ArrayList<PostInfo>();
 	int page = 1;
 	
 	private boolean mInstanceAlreadySaved;
     private Bundle mSavedOutState;
     private DBHelper db;
     private String searchType = "t"; // default; t => title, c => content, ct => title and content
+    private int dialogItem = 0;
     private String username;
 	
     @Override 
@@ -59,9 +63,51 @@ public class SearchFragment extends ListFragment implements Runnable {
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 		outState.putParcelableArrayList("search", postInfoList);
+		outState.putParcelableArrayList("search2", postInfoList2);
+		outState.putInt("dialogItem", dialogItem);
+		outState.putString("username", username);
+
 		mInstanceAlreadySaved = true;
 	}
 
+	public ArrayList<PostInfo> getRowInfo(Object[] nodeList) throws XPatherException {
+		TagNode n;
+		for (Object o : nodeList){
+			n = (TagNode)o;
+			if (n.evaluateXPath("./td[3]").length > 0) {
+				TagNode topicStarter =  (TagNode)(n.evaluateXPath("./td[3]"))[0];
+				TagNode replies =  (TagNode)(n.evaluateXPath("./td[4]"))[0];
+				TagNode lastMessage = (TagNode)(n.evaluateXPath("./td[6]"))[0];
+				Object [] resourceList = (n.evaluateXPath("./td[2]/a"));
+				TagNode topic = (TagNode)resourceList[0];
+				TagNode lastPost = (TagNode)resourceList[resourceList.length-1];
+				TagNode topicURL = (TagNode)resourceList[0];
+				
+				String topicURLString = topicURL.getAttributeByName("href");
+				if (searchType == "c") {
+					int postNumber = Integer.parseInt(lastPost.getText().toString());
+					int pageNumber = (postNumber/20) + 1;
+					
+					topicURLString = String.format("%s&currentpage=%d#%d", topicURLString, pageNumber, postNumber);
+				}
+
+				PostInfo postInfo = new PostInfo();
+				if (topicStarter.getChildren().iterator().hasNext())
+					postInfo.topicStarterString = HtmlTools.unescapeHtml(topicStarter.getChildren().iterator().next().toString());
+				if (replies.getChildren().iterator().hasNext())
+					postInfo.repliesString = HtmlTools.unescapeHtml(replies.getChildren().iterator().next().toString());
+				postInfo.lastMessageString = HtmlTools.unescapeHtml(lastMessage.getChildren().get(0).toString());
+				postInfo.lastMessageString += " " + HtmlTools.unescapeHtml(lastMessage.getChildren().get(2).toString());
+				postInfo.topicURL = topicURLString;
+				if (topic.getChildren().iterator().hasNext())
+					postInfo.topicString = HtmlTools.unescapeHtml(topic.getChildren().iterator().next().toString());
+
+				postInfoList.add(postInfo);				
+			}			
+		}
+		return postInfoList;
+	}
+	
 	public void run() {
 		try {
 			TagNode response = TLLib.TagNodeFromURLSearch(new HtmlCleaner(),search.getText().toString()+"&t="+searchType+(username != null ? "&u="+username : ""), handler,getActivity());
@@ -70,48 +116,19 @@ public class SearchFragment extends ListFragment implements Runnable {
 			try {
 				tableResults = response.evaluateXPath("//table[@width=748]/tbody");
 				
-				// Add 3 cases here; title, content, title & content //				
+				// Add 3 cases here; title, content, title & content //
 				nodeList = ((TagNode)tableResults[tableResults.length - 2]).evaluateXPath("//tr[position()>1]");
-				
-				TagNode n;
-				for (Object o : nodeList){
-					n = (TagNode)o;
-					if (n.evaluateXPath("./td[3]").length > 0) {
-						TagNode topicStarter =  (TagNode)(n.evaluateXPath("./td[3]"))[0];
-						TagNode replies =  (TagNode)(n.evaluateXPath("./td[4]"))[0];
-						TagNode lastMessage = (TagNode)(n.evaluateXPath("./td[6]"))[0];
-						Object [] resourceList = (n.evaluateXPath("./td[2]/a"));
-						TagNode topic = (TagNode)resourceList[0];
-						TagNode lastPost = (TagNode)resourceList[resourceList.length-1];
-						TagNode topicURL = (TagNode)resourceList[0];
-						
-						String topicURLString = topicURL.getAttributeByName("href");
-						if (searchType == "c") {
-							int postNumber = Integer.parseInt(lastPost.getText().toString());
-							int pageNumber = (postNumber/20) + 1;
-							
-							topicURLString = String.format("%s&currentpage=%d#%d", topicURLString, pageNumber, postNumber);
-						}
-	
-						PostInfo postInfo = new PostInfo();
-						if (topicStarter.getChildren().iterator().hasNext())
-							postInfo.topicStarterString = HtmlTools.unescapeHtml(topicStarter.getChildren().iterator().next().toString());
-						if (replies.getChildren().iterator().hasNext())
-							postInfo.repliesString = HtmlTools.unescapeHtml(replies.getChildren().iterator().next().toString());
-						postInfo.lastMessageString = HtmlTools.unescapeHtml(lastMessage.getChildren().get(0).toString());
-						postInfo.lastMessageString += " " + HtmlTools.unescapeHtml(lastMessage.getChildren().get(2).toString());
-						postInfo.topicURL = topicURLString;
-						if (topic.getChildren().iterator().hasNext())
-							postInfo.topicString = HtmlTools.unescapeHtml(topic.getChildren().iterator().next().toString());
-	
-						postInfoList.add(postInfo);
-					}
+				if (searchType == "ct") {
+					Object[] nodeList2;
+					nodeList2 = ((TagNode)tableResults[tableResults.length - 5]).evaluateXPath("//tr[position()>1]");
+					postInfoList2 = getRowInfo(nodeList2);
 				}
+				
+				postInfoList = getRowInfo(nodeList);
 			} catch (XPatherException e) {
 				Log.d("SearchFragment", "couldn't retrieve results tables");
 				e.printStackTrace();
-			}
-			
+			}			
 			handler.sendEmptyMessage(0);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -122,14 +139,15 @@ public class SearchFragment extends ListFragment implements Runnable {
 	public void onResume() {
 		super.onResume();
 		if (!postInfoList.isEmpty())
-			getListView().setAdapter(new MyPostsAdapter(postInfoList, getActivity()));
+			handler.sendEmptyMessage(0);
 	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		db = new DBHelper(getActivity());
+		if (db == null)
+			db = new DBHelper(getActivity());
 		
 		if (null == savedInstanceState && null != mSavedOutState) {
             savedInstanceState = mSavedOutState;
@@ -139,11 +157,14 @@ public class SearchFragment extends ListFragment implements Runnable {
 		
 		if (savedInstanceState != null) {
 			postInfoList = savedInstanceState.getParcelableArrayList("search");
+			postInfoList2 = savedInstanceState.getParcelableArrayList("search2");
+			dialogItem = savedInstanceState.getInt("dialogItem");
+			username = savedInstanceState.getString("username");
 		}
 		
 		instance = this;
 		
-		View view = inflater.inflate(R.layout.search, container,false);
+		View view = inflater.inflate(R.layout.search, container, false);
 		
 		search = (EditText)view.findViewById(R.id.search);
 		progressBar = (ProgressBar)view.findViewById(R.id.progressBar);
@@ -153,7 +174,11 @@ public class SearchFragment extends ListFragment implements Runnable {
 			@Override
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
 				if ((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
+					InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+				    imm.hideSoftInputFromWindow(search.getWindowToken(), 0);
+
 					postInfoList = new ArrayList<PostInfo>();
+					postInfoList2 = new ArrayList<PostInfo>();
 					progressBar.setVisibility(View.VISIBLE);
 					handler = new SearchHandler(progressBar);
 					page = 1;
@@ -177,7 +202,17 @@ public class SearchFragment extends ListFragment implements Runnable {
 		@Override
 		public void handleMessage(Message msg) {
 			if (msg.what == 0 ) {
-				getListView().setAdapter(new MyPostsAdapter(postInfoList, getActivity()));
+				ListView list = (ListView)getActivity().findViewById(android.R.id.list); 				
+								
+				list.setAdapter(new MyPostsAdapter(postInfoList, getActivity()));
+				/*if (!postInfoList2.isEmpty()) {
+					ListView list2 = (ListView)getActivity().findViewById(R.id.list2); 
+					TextView results2 = (TextView)getActivity().findViewById(R.id.results2);
+					
+					list2.setVisibility(View.VISIBLE);
+					results2.setVisibility(View.VISIBLE);
+					list2.setAdapter(new MyPostsAdapter(postInfoList2, getActivity()));
+				}*/
 				bar.setVisibility(View.INVISIBLE);
 			} else {
 				super.handleMessage(msg);
@@ -193,7 +228,6 @@ public class SearchFragment extends ListFragment implements Runnable {
             mSavedOutState = new Bundle();
             onSaveInstanceState( mSavedOutState );
         }
-
         super.onStop();
     }
 	
@@ -226,20 +260,22 @@ public class SearchFragment extends ListFragment implements Runnable {
 		switch (item.getItemId()) {
 		case R.id.searchBy:
 			final CharSequence[] items = {"Title", "Content", "Title and Content"};
-			
 			AlertDialog.Builder builderRadio = new AlertDialog.Builder(context);
 			builderRadio.setTitle("Search Option");
-			builderRadio.setSingleChoiceItems(items, 0, new DialogInterface.OnClickListener() {
+			builderRadio.setSingleChoiceItems(items, dialogItem, new DialogInterface.OnClickListener() {
 			    public void onClick(DialogInterface dialog, int id) {
 			    	switch (id) {
 			    	case 0:
 			    		searchType = "t";
+			    		dialogItem = 0;
 			    		break;
 			    	case 1:
 			    		searchType ="c";
+			    		dialogItem = 1;
 			    		break;
 			    	case 2:
 			    		searchType = "ct";
+			    		dialogItem = 2;
 			    		break;
 			    	}
 			    	dialog.dismiss();
@@ -252,7 +288,7 @@ public class SearchFragment extends ListFragment implements Runnable {
 			LayoutInflater li = LayoutInflater.from(context);
 			View promptsView = li.inflate(R.layout.search_user_prompt, null);
 			final EditText userInput = (EditText) promptsView.findViewById(R.id.searchUsernameText);
-			
+			userInput.setText(username);
 			AlertDialog.Builder builderInput = new AlertDialog.Builder(context);
 			builderInput.setView(promptsView);	
 			builderInput.setPositiveButton("OK", new DialogInterface.OnClickListener() {
