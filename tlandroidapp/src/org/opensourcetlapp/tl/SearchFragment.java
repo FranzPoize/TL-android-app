@@ -50,7 +50,7 @@ public class SearchFragment extends ListFragment implements Runnable {
 	private boolean mInstanceAlreadySaved;
     private Bundle mSavedOutState;
     private DBHelper db;
-    private String searchType = "t"; // default; t => title, c => content, ct => title and content
+    private String searchType = "t"; // default; t => title, c => content
     private int dialogItem = 0;
     private String username;
 	
@@ -70,7 +70,7 @@ public class SearchFragment extends ListFragment implements Runnable {
 		mInstanceAlreadySaved = true;
 	}
 
-	public ArrayList<PostInfo> getRowInfo(Object[] nodeList) throws XPatherException {
+	public ArrayList<PostInfo> getList(Object[] nodeList) throws XPatherException {
 		TagNode n;
 		for (Object o : nodeList){
 			n = (TagNode)o;
@@ -116,15 +116,8 @@ public class SearchFragment extends ListFragment implements Runnable {
 			try {
 				tableResults = response.evaluateXPath("//table[@width=748]/tbody");
 				
-				// Add 3 cases here; title, content, title & content //
 				nodeList = ((TagNode)tableResults[tableResults.length - 2]).evaluateXPath("//tr[position()>1]");
-				if (searchType == "ct") {
-					Object[] nodeList2;
-					nodeList2 = ((TagNode)tableResults[tableResults.length - 5]).evaluateXPath("//tr[position()>1]");
-					postInfoList2 = getRowInfo(nodeList2);
-				}
-				
-				postInfoList = getRowInfo(nodeList);
+				postInfoList = getList(nodeList);
 			} catch (XPatherException e) {
 				Log.d("SearchFragment", "couldn't retrieve results tables");
 				e.printStackTrace();
@@ -202,17 +195,12 @@ public class SearchFragment extends ListFragment implements Runnable {
 		@Override
 		public void handleMessage(Message msg) {
 			if (msg.what == 0 ) {
-				ListView list = (ListView)getActivity().findViewById(android.R.id.list); 				
-								
+				TextView header = (TextView)getActivity().findViewById(R.id.searchHeader);				
+				ListView list = (ListView)getActivity().findViewById(android.R.id.list);				
+				
+				header.setText("Search by " + (searchType == "t" ? "Title" : "Content") + (username != null ? " - " + username : ""));
 				list.setAdapter(new MyPostsAdapter(postInfoList, getActivity()));
-				/*if (!postInfoList2.isEmpty()) {
-					ListView list2 = (ListView)getActivity().findViewById(R.id.list2); 
-					TextView results2 = (TextView)getActivity().findViewById(R.id.results2);
-					
-					list2.setVisibility(View.VISIBLE);
-					results2.setVisibility(View.VISIBLE);
-					list2.setAdapter(new MyPostsAdapter(postInfoList2, getActivity()));
-				}*/
+				header.setVisibility(View.VISIBLE);
 				bar.setVisibility(View.INVISIBLE);
 			} else {
 				super.handleMessage(msg);
@@ -259,7 +247,7 @@ public class SearchFragment extends ListFragment implements Runnable {
 		Context context = getActivity();
 		switch (item.getItemId()) {
 		case R.id.searchBy:
-			final CharSequence[] items = {"Title", "Content", "Title and Content"};
+			final CharSequence[] items = {"Title", "Content"};
 			AlertDialog.Builder builderRadio = new AlertDialog.Builder(context);
 			builderRadio.setTitle("Search Option");
 			builderRadio.setSingleChoiceItems(items, dialogItem, new DialogInterface.OnClickListener() {
@@ -273,11 +261,8 @@ public class SearchFragment extends ListFragment implements Runnable {
 			    		searchType ="c";
 			    		dialogItem = 1;
 			    		break;
-			    	case 2:
-			    		searchType = "ct";
-			    		dialogItem = 2;
-			    		break;
 			    	}
+			    	Toast.makeText(getActivity(), items[id], Toast.LENGTH_SHORT).show();
 			    	dialog.dismiss();
 			    }
 			});
