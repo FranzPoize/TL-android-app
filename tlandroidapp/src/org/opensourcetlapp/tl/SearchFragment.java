@@ -44,7 +44,6 @@ public class SearchFragment extends ListFragment implements Runnable {
 	ProgressBar progressBar;
 	SearchHandler handler;
 	ArrayList<PostInfo> postInfoList = new ArrayList<PostInfo>();
-	ArrayList<PostInfo> postInfoList2 = new ArrayList<PostInfo>();
 	int page = 1;
 	
 	private boolean mInstanceAlreadySaved;
@@ -63,22 +62,22 @@ public class SearchFragment extends ListFragment implements Runnable {
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 		outState.putParcelableArrayList("search", postInfoList);
-		outState.putParcelableArrayList("search2", postInfoList2);
 		outState.putInt("dialogItem", dialogItem);
 		outState.putString("username", username);
 
 		mInstanceAlreadySaved = true;
 	}
 
-	public ArrayList<PostInfo> getList(Object[] nodeList) throws XPatherException {
+	public ArrayList<PostInfo> getList(Object[] nodeList) throws XPatherException, ArrayIndexOutOfBoundsException {
 		TagNode n;
+		Object[] resourceList = null;
 		for (Object o : nodeList){
 			n = (TagNode)o;
 			if (n.evaluateXPath("./td[3]").length > 0) {
 				TagNode topicStarter =  (TagNode)(n.evaluateXPath("./td[3]"))[0];
 				TagNode replies =  (TagNode)(n.evaluateXPath("./td[4]"))[0];
 				TagNode lastMessage = (TagNode)(n.evaluateXPath("./td[6]"))[0];
-				Object [] resourceList = (n.evaluateXPath("./td[2]/a"));
+				resourceList = (n.evaluateXPath("./td[2]/a"));
 				TagNode topic = (TagNode)resourceList[0];
 				TagNode lastPost = (TagNode)resourceList[resourceList.length-1];
 				TagNode topicURL = (TagNode)resourceList[0];
@@ -115,13 +114,15 @@ public class SearchFragment extends ListFragment implements Runnable {
 			Object[] nodeList = null;
 			try {
 				tableResults = response.evaluateXPath("//table[@width=748]/tbody");
-				
+				Log.d("Search", Integer.toString(tableResults.length));
 				nodeList = ((TagNode)tableResults[tableResults.length - 2]).evaluateXPath("//tr[position()>1]");
 				postInfoList = getList(nodeList);
 			} catch (XPatherException e) {
 				Log.d("SearchFragment", "couldn't retrieve results tables");
 				e.printStackTrace();
-			}			
+			} catch (ArrayIndexOutOfBoundsException e) {
+				e.printStackTrace();
+			}
 			handler.sendEmptyMessage(0);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -150,7 +151,6 @@ public class SearchFragment extends ListFragment implements Runnable {
 		
 		if (savedInstanceState != null) {
 			postInfoList = savedInstanceState.getParcelableArrayList("search");
-			postInfoList2 = savedInstanceState.getParcelableArrayList("search2");
 			dialogItem = savedInstanceState.getInt("dialogItem");
 			username = savedInstanceState.getString("username");
 		}
@@ -171,7 +171,6 @@ public class SearchFragment extends ListFragment implements Runnable {
 				    imm.hideSoftInputFromWindow(search.getWindowToken(), 0);
 
 					postInfoList = new ArrayList<PostInfo>();
-					postInfoList2 = new ArrayList<PostInfo>();
 					progressBar.setVisibility(View.VISIBLE);
 					handler = new SearchHandler(progressBar);
 					page = 1;
