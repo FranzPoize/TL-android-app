@@ -35,6 +35,7 @@ public class MytlnetFragment extends Fragment implements Runnable {
 	private ProgressDialog progressDialog;
 	private TLHandler handler;
 	private Context context;
+	private Button subButton;
 	private Button postsButton;
 	private Button pmButton;
 	private CheckBox rememberMeCheckBox;
@@ -91,6 +92,17 @@ public class MytlnetFragment extends Fragment implements Runnable {
 						"Logging in...", true, true);
 				handler = new LoginHandler(progressDialog, context);
 				new Thread((Runnable) instance).start();
+			}
+		});
+		
+		subButton = (Button)view.findViewById(R.id.subButton);
+		subButton.setOnClickListener(new View.OnClickListener() {			
+			@Override
+			public void onClick(View v) {
+				// TODO: Add intent for subscribed threads
+				/*Intent intent = new Intent().setClass(context,
+						MySubs.class);
+				startActivity(intent);*/
 			}
 		});
 		

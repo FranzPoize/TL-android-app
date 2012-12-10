@@ -43,7 +43,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public class ForumAdapter extends BaseAdapter{
+public class SubThreadAdapter extends BaseAdapter{
 	private class ViewHolder {
 		public TextView topic;
 		public TextView topicStarter;
@@ -59,7 +59,7 @@ public class ForumAdapter extends BaseAdapter{
 	
 	private static final String TAG = "ForumAdapter";
 	
-	public ForumAdapter(List <PostInfo>postInfoList, Context context,ListView view){
+	public SubThreadAdapter(List <PostInfo>postInfoList, Context context,ListView view){
 		this.postInfoList = postInfoList;
 		this.context = context;
 		mInflater = LayoutInflater.from(context);

@@ -1,25 +1,3 @@
-/*
- * Copyright 2010, 2011 Ali Piccioni & Francois Poizat
- *
- * This program is distributed under the terms of the GNU General Public License
- *
- *  This file is part of Team Liquid Android App.
- *
- *  Team Liquid Android App is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  Team Liquid Android App is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Team Liquid Android App.  If not, see <http://www.gnu.org/licenses/>.
- *
- */
-
 package org.opensourcetlapp.tl.Structs;
 
 import java.util.List;
@@ -33,7 +11,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.v4.os.ParcelableCompat;
 
-public class PostInfo implements Parcelable {
+public class SubInfo implements Parcelable {
 	public String topicURL;
 	public String topicString;
 	public String topicStarterString;
@@ -45,7 +23,7 @@ public class PostInfo implements Parcelable {
 	
 	private static StringBuilder sb;
 	
-	public PostInfo(Parcel source) {
+	public SubInfo(Parcel source) {
 		this.topicURL = source.readString();
 		this.topicString = source.readString();
 		this.topicStarterString = source.readString();
@@ -55,11 +33,11 @@ public class PostInfo implements Parcelable {
 		this.imageString = source.readString();
 	}
 	
-	public PostInfo() {
+	public SubInfo() {
 	}
 	
-	public static PostInfo buildPostInfoFromForumEntry(TagNode entry) throws XPatherException{
-		PostInfo postInfo = new PostInfo();
+	public static SubInfo buildPostInfoFromForumEntry(TagNode entry) throws XPatherException{
+		SubInfo postInfo = new SubInfo();
 		
 		if(sb == null) { sb = new StringBuilder(); }
 		List <TagNode> children = entry.getChildren();
@@ -103,18 +81,18 @@ public class PostInfo implements Parcelable {
 		dest.writeString(imageString);
 	}
 	
-	public static final Parcelable.Creator<PostInfo> CREATOR = new Parcelable.Creator<PostInfo>()
+	public static final Parcelable.Creator<SubInfo> CREATOR = new Parcelable.Creator<SubInfo>()
 	{
 	    @Override
-	    public PostInfo createFromParcel(Parcel source)
+	    public SubInfo createFromParcel(Parcel source)
 	    {
-	        return new PostInfo(source);
+	        return new SubInfo(source);
 	    }
 	 
 	    @Override
-	    public PostInfo[] newArray(int size)
+	    public SubInfo[] newArray(int size)
 	    {
-	    return new PostInfo[size];
+	    return new SubInfo[size];
 	    }
 	};
 }

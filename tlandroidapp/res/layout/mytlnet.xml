@@ -71,6 +71,17 @@
             android:paddingLeft="15dip"
             android:paddingRight="15dip" >
 
+            <Button
+                android:id="@+id/subButton"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_margin="3dp"
+                android:background="@drawable/button_gradient"
+                android:enabled="false"
+                android:text="Subscribed Threads"
+                android:textColor="@color/TLBlue" />
+            
             <LinearLayout
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
