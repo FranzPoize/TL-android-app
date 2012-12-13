@@ -93,18 +93,7 @@ public class MytlnetFragment extends Fragment implements Runnable {
 				handler = new LoginHandler(progressDialog, context);
 				new Thread((Runnable) instance).start();
 			}
-		});
-		
-		subButton = (Button)view.findViewById(R.id.subButton);
-		subButton.setOnClickListener(new View.OnClickListener() {			
-			@Override
-			public void onClick(View v) {
-				// TODO: Add intent for subscribed threads
-				/*Intent intent = new Intent().setClass(context,
-						MySubs.class);
-				startActivity(intent);*/
-			}
-		});
+		});		
 		
 		pmButton = (Button)view.findViewById(R.id.pmButton);
 		pmButton.setOnClickListener(new View.OnClickListener() {			
@@ -126,6 +115,16 @@ public class MytlnetFragment extends Fragment implements Runnable {
 			}
 		});
 
+		subButton = (Button)view.findViewById(R.id.subButton);
+		subButton.setOnClickListener(new View.OnClickListener() {			
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent().setClass(context,
+						MySubs.class);
+				startActivity(intent);
+			}
+		});
+		
 		rememberMeCheckBox = (CheckBox) view.findViewById(R.id.rememberMeCheckBox);
 		rememberMeCheckBox.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -231,7 +230,8 @@ public class MytlnetFragment extends Fragment implements Runnable {
 		usernameEditText.setEnabled(false);
 		passwordEditText.setEnabled(false);
 		pmButton.setEnabled(true);
-		postsButton.setEnabled(true);	
+		postsButton.setEnabled(true);
+		subButton.setEnabled(true);
 	}
 	
 	private void setLoggedOut(){
@@ -239,6 +239,7 @@ public class MytlnetFragment extends Fragment implements Runnable {
 		passwordEditText.setEnabled(true);
 		postsButton.setEnabled(false);
 		pmButton.setEnabled(false);
+		subButton.setEnabled(false);
 	}
 
 	private class LoginHandler extends TLHandler {

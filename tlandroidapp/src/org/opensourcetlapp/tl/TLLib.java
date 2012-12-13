@@ -197,6 +197,10 @@ public class TLLib {
 		cookieStore = null;
 	}
 	
+	public static void subscribeThread() {
+		// TODO
+	}
+	
 	public static void sendPM(String to, String subject, String message) throws IOException{
         DefaultHttpClient httpclient = new DefaultHttpClient();
 		httpclient.setCookieStore(cookieStore);
@@ -367,6 +371,11 @@ public class TLLib {
 			Handler handler, Context context) throws IOException{
 			return TagNodeFromURLEx2(cleaner, url, handler, context, "<table width='748' cellpadding='3' cellspacing='0' border='0' style='border:1px solid #00005D;'>", true);
 	}	
+	
+	public static TagNode TagNodeFromURLMySubs(HtmlCleaner cleaner, URL url,
+			Handler handler, Context context) throws IOException{
+			return TagNodeFromURLEx2(cleaner, url, handler, context, "<table width=\"100%\" class=\"solid\" cellspacing=0>", true);
+	}
 	
 	private static final String APPLICATION_TITLE = "Team Liquid";
 	

@@ -1,74 +1,94 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="org.opensourcetlapp.tl"
-      android:versionCode="44"
-      android:versionName="BETA 0.5.1">
+    package="org.opensourcetlapp.tl"
+    android:versionCode="44"
+    android:versionName="BETA 0.5.1" >
+
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="9"/>
-    <application android:icon="@drawable/icon" android:label="@string/app_name" android:theme="@style/TLTheme" android:name=".TLApplication" android:debuggable="true">
-        <activity android:name=".main"
-         		android:configChanges="orientation|keyboardHidden"
-                  android:label="@string/app_name">
+
+    <uses-sdk
+        android:minSdkVersion="4"
+        android:targetSdkVersion="17" />
+
+    <application
+        android:icon="@drawable/icon"
+        android:label="@string/app_name"
+        android:theme="@style/TLTheme" >
+        <activity
+            android:name=".Main"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
-        <activity android:name=".ShowForumList"
-         			android:configChanges="orientation|keyboardHidden"
-                  android:label="@string/app_name">
+        <activity
+            android:name=".ShowForumList"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/app_name" >
         </activity>
-        
-        <activity android:name=".MyPosts"
-     		    android:configChanges="orientation|keyboardHidden"
-                  android:label="@string/app_name">
+        <activity
+            android:name=".MyPosts"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/app_name" >
         </activity>
-        
-        <activity android:name=".ShowMyPM"
-     		    android:configChanges="orientation|keyboardHidden"
-                  android:label="@string/app_name">
+         <activity
+            android:name=".MySubs"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/app_name" >
         </activity>
-        
-         <activity android:name=".ShowMyPMPost"
-     		    android:configChanges="orientation|keyboardHidden"
-                  android:label="@string/app_name">
+        <activity
+            android:name=".ShowMyPM"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/app_name" >
         </activity>
-        
-        <activity android:name=".ShowMyPMReply"
-     		    android:configChanges="orientation|keyboardHidden"
-                  android:label="@string/app_name">
+        <activity
+            android:name=".ShowMyPMPost"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/app_name" >
         </activity>
-        
-        <activity android:name=".CreateThread"
-     		    android:configChanges="orientation|keyboardHidden"
-                  android:label="@string/app_name">
+        <activity
+            android:name=".ShowMyPMReply"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/app_name" >
         </activity>
-        
-        <activity android:name=".ShowForum"
-     		    android:configChanges="orientation|keyboardHidden"
-                  android:label="@string/app_name">
+        <activity
+            android:name=".CreateThread"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/app_name" >
         </activity>
-
-        <activity android:name=".EditPost"
-     		   	 android:configChanges="orientation|keyboardHidden"
-                  android:label="@string/app_name">
+        <activity
+            android:name=".ShowForum"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/app_name" >
         </activity>
-		<activity android:name=".ShowPost" 
-		    	android:configChanges="orientation|keyboardHidden"
-				android:label="@string/app_name">     
+        <activity
+            android:name=".EditPost"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/app_name" >
         </activity>
-        <activity android:name=".ShowThread" 
-		    	android:configChanges="orientation|keyboardHidden"
-				android:label="@string/app_name">     
+        <activity
+            android:name=".ShowPost"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/app_name" >
         </activity>
-        <activity android:name=".PostMessage"
-         			android:configChanges="orientation|keyboardHidden"
-                    android:label="@string/app_name">     
+        <activity
+            android:name=".ShowThread"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/app_name" >
         </activity>
-        <activity android:name=".Settings"
-         	android:configChanges="orientation|keyboardHidden"
-             android:label="@string/app_name">     
+        <activity
+            android:name=".PostMessage"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/app_name" >
+        </activity>
+        <activity
+            android:name=".Settings"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/app_name" >
         </activity>
     </application>
-</manifest> 
+
+</manifest>

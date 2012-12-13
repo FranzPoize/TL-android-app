@@ -51,6 +51,7 @@ import android.widget.ListView;
 
 public class MyPosts extends ListActivity implements Runnable {
 	private static final String RESOURCE_PATH = "mytlnet/myposts.php";
+	private static final String FORUM_ENTRIES_XPATH = "//table[@width=\"748\"]/tbody/tr[position()>1]";
 	private static final String TAG = "MyPosts";
 	private ProgressDialog progressDialog;
 	private TLHandler handler;
@@ -84,7 +85,7 @@ public class MyPosts extends ListActivity implements Runnable {
 			TagNode node = TLLib.TagNodeFromURLMyPosts(cleaner, new URL(url), handler, context);
 			handler.sendEmptyMessage(TLHandler.PROGRESS_RENDERING);
 
-			Object [] nodeList = node.evaluateXPath("//table[@width=\"748\"]/tbody/tr[position()>1]");
+			Object [] nodeList = node.evaluateXPath(FORUM_ENTRIES_XPATH);
 			
 			TagNode n;
 			for (Object o : nodeList){
