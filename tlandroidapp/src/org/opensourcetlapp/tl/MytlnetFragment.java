@@ -10,6 +10,7 @@ import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Message;
 import android.support.v4.app.Fragment;
@@ -26,6 +27,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MytlnetFragment extends Fragment implements Runnable {
 	private Button loginButton;
@@ -66,18 +68,14 @@ public class MytlnetFragment extends Fragment implements Runnable {
 		usernameEditText = (EditText) view.findViewById(R.id.username);
 		passwordEditText = (EditText) view.findViewById(R.id.password);
 		context = getActivity();
-		setLoginListner();
 		
 		instance = this;
 		
 		logoutButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				TLLib.logout();
-				setLoggedOut();
-				setLoginListner();
-				loggedInView.setVisibility(LinearLayout.GONE);
-				loggedOutView.setVisibility(LinearLayout.VISIBLE);
+				LogoutTask logoutTask = new LogoutTask();
+				logoutTask.execute();				
 			}
 		});
 		
@@ -221,10 +219,6 @@ public class MytlnetFragment extends Fragment implements Runnable {
 		
 		return view;
 	}
-
-	private void setLoginListner() {
-		
-	}
 	
 	private void setLoggedIn(){
 		usernameEditText.setEnabled(false);
@@ -273,6 +267,31 @@ public class MytlnetFragment extends Fragment implements Runnable {
 		}
 	}
 
+	private class LogoutTask extends AsyncTask<Void, Void, Boolean> {		
+		@Override
+		protected Boolean doInBackground(Void... params) {
+			try {
+				TLLib.logout();
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			}
+			return true;
+			
+		}
+		
+		@Override
+		protected void onPostExecute(Boolean result) {
+			if (result) {
+				setLoggedOut();
+				loggedInView.setVisibility(LinearLayout.GONE);
+				loggedOutView.setVisibility(LinearLayout.VISIBLE);
+			} else
+				Toast.makeText(context, "Logout failed!", Toast.LENGTH_SHORT).show();
+		}
+		
+	}
+	
 	private void buildLoggedInView() {
 		((TextView)loggedInView.findViewById(R.id.usernameText)).setText(usernameEditText.getText());
 	}

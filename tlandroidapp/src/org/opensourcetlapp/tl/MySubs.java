@@ -18,6 +18,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Message;
 import android.util.Log;
@@ -28,6 +29,7 @@ import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 
 public class MySubs extends ListActivity implements Runnable {
@@ -82,6 +84,19 @@ public class MySubs extends ListActivity implements Runnable {
 		}
 	}
 	
+	private int parseTopicId(String threadUrl) {
+		String getAttributes = threadUrl.split("\\?")[1];
+		String [] temp = getAttributes.split("#");
+		String [] attributes = temp[0].split("&");
+		for (String attribute : attributes){
+			String [] nameValue = attribute.split("=");
+			if (nameValue[0].equals("topic_id")){
+				return Integer.parseInt(nameValue[1]);
+			}
+		}
+		return -1; // Unsupported url
+	}
+	
 	private class MyPostsHandler extends TLHandler {
 		public MyPostsHandler(ProgressDialog progressDialog, Context context) {
 			super(progressDialog, context);
@@ -131,7 +146,10 @@ public class MySubs extends ListActivity implements Runnable {
 			    Log.e(TAG, "bad menuInfo", e);
 			    return false;
 			}
-			// TODO
+			int topicId = parseTopicId(subInfoList.get(info.position).topicURL);
+			subInfoList.remove(info.position);
+			UnsubscribeThreadTask unsubscribeThreadTask = new UnsubscribeThreadTask(topicId);
+			unsubscribeThreadTask.execute();
 			break;
 		}
 		return true;
@@ -140,5 +158,31 @@ public class MySubs extends ListActivity implements Runnable {
 	public void run(){
 		render();
 		handler.sendEmptyMessage(0);
+	}
+	
+	private class UnsubscribeThreadTask extends AsyncTask<Void, Void, Boolean> {
+		String topicId;
+		
+		public UnsubscribeThreadTask(int topicId) {
+			this.topicId = Integer.toString(topicId);
+		}
+		
+		@Override
+		protected Boolean doInBackground(Void... arg0) {
+			try {
+				TLLib.subscribeThread(topicId);
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			}
+			return true;
+		}
+		
+		@Override
+		protected void onPostExecute(Boolean result) {
+			if (result)
+				Toast.makeText(context, "Thread unsubscribed!", Toast.LENGTH_SHORT).show();
+			getListView().setAdapter(new ForumAdapter(subInfoList, context, getListView()));
+		}
 	}
 }
