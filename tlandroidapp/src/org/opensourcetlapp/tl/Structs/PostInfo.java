@@ -43,7 +43,7 @@ public class PostInfo implements Parcelable {
 	public String imageString;
 	public boolean locked;
 	
-	private static StringBuilder	sb;
+	private static StringBuilder sb;
 	
 	public PostInfo(Parcel source) {
 		this.topicURL = source.readString();

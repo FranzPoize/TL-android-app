@@ -39,7 +39,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 
-public class main extends FragmentActivity{
+public class Main extends FragmentActivity{
 	private ViewPager mViewPager;  
     private TLPagerAdapter mTLPagerAdapter;
     

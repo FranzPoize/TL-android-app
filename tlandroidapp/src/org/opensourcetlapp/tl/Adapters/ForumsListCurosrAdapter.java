@@ -2,7 +2,7 @@ package org.opensourcetlapp.tl.Adapters;
 
 import org.opensourcetlapp.tl.ShowForumList;
 
-import com.viewpagerindicator.R;
+import org.opensourcetlapp.tl.R;
 import android.content.Context;
 import android.content.res.Resources;
 import android.database.Cursor;

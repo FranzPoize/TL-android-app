@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Iterator;
 
-import org.htmlcleaner.ContentToken;
+import org.htmlcleaner.ContentNode;
 import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPatherException;
 import org.htmlcleaner.XmlSerializer;
@@ -198,8 +198,8 @@ public class RenderUBB {
 	private void renderRec(Object node) throws IOException {
 		if (node.getClass() == TagNode.class) {
 			renderTagNode((TagNode) node);
-		} else if (node.getClass() == ContentToken.class) {
-			renderContentToken((ContentToken) node);
+		} else if (node.getClass() == ContentNode.class) {
+			renderContentToken((ContentNode) node);
 		}
 	}
 
@@ -471,8 +471,8 @@ public class RenderUBB {
 		}
 	}
 
-	private void renderContentToken(ContentToken token) {
-		ContentToken childToken = (ContentToken) token;
+	private void renderContentToken(ContentNode token) {
+		ContentNode childToken = (ContentNode) token;
 		Spanned span = Html.fromHtml(token.toString(), null, null);
 
 		curTextView.append(span);

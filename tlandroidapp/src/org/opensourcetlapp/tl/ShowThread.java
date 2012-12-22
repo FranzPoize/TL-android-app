@@ -20,6 +20,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Message;
 import android.text.Html;
@@ -42,6 +43,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class ShowThread extends Activity implements Runnable {
 
@@ -49,8 +51,8 @@ public class ShowThread extends Activity implements Runnable {
 			"function toggleShowSpoiler2(b,c){var a=document.getElementById('spoiler_'+c);a.style.display=a.style.display=='none'?'block':'none';}"+
 			"function toggleShowSpoiler(c,a,b){toggleShowSpoiler2(c,b);}</script>";
 	
-	private static final String PREV_PAGE_XPATH = "./tbody/tr[last()]/td[2]/a";
-	private static final String LOGGED_IN_PREV_PAGE_XPATH = "./tbody/tr/td[2]/a";
+	private static final String SUB_THREAD_PATH = "/tbody/tr/td/a[@id='subscribe_link']";
+	private static final String PREV_PAGE_XPATH = "./tbody/tr/td[2]/a";
 	
 	private String postURL;
 	private int topicId;
@@ -58,6 +60,7 @@ public class ShowThread extends Activity implements Runnable {
 	private int lastPage;
 	private String lastURL;
 	private boolean postLocked;
+	private boolean subscribed;
 	
 	private static CustomImageGetter imageGetter;
 	
@@ -228,11 +231,14 @@ public class ShowThread extends Activity implements Runnable {
 			Object[] posts =  node.evaluateXPath("//table[@width='742']/tbody/tr");
 			int offset = ((TagNode)posts[posts.length-1]).evaluateXPath("//form[@name='theform']").length > 0 ? 2 : 2;
 			
-			/** get number of page */
-			Object[] nextPages;
+			if (TLLib.loginStatus == true) {
+				TagNode subNode = forumTagNode.findElementByAttValue("id", "subscribe_link", true, true);			
+				if (subNode.getText().equals("Unsubscribe"))
+					subscribed = true;
+			}
 			
-
-			nextPages = forumTagNode.evaluateXPath(LOGGED_IN_PREV_PAGE_XPATH);
+			/** get number of page */
+			Object[] nextPages = forumTagNode.evaluateXPath(PREV_PAGE_XPATH);
 			
 			if (nextPages.length > 0) {
 				int nextPageLength = nextPages.length;
@@ -588,6 +594,16 @@ public class ShowThread extends Activity implements Runnable {
 		return true;
 	}
 	
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		MenuItem subMenuItem = menu.findItem(R.id.subscribeThread);
+		if (subscribed)
+			subMenuItem.setTitle("Unsubscribe");
+		else
+			subMenuItem.setTitle("Subscribe");
+		return true;
+	}
+	
 	private void showGotoPageDialog(){
 		if (gotoPageDialog == null){
 			gotoPageDialog = new Dialog(this);
@@ -649,39 +665,75 @@ public class ShowThread extends Activity implements Runnable {
 		gotoPageEditText.setText("");
 		gotoPageDialog.show();
 	}
-	
+
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.gotoPage:
-			showGotoPageDialog();
-			break;
-		case R.id.refresh:
-			refresh(false);
-			break;
-		case R.id.reply:
-			if (!TLLib.loginStatus){
-				AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
-				alertDialogBuilder.setTitle("Login Error");
-				alertDialogBuilder.setMessage("Please Login before posting.\n");
-				alertDialogBuilder.setPositiveButton("Okay", null);
-				alertDialogBuilder.show();
-			}
-			else if (postLocked){
-				AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
-				alertDialogBuilder.setTitle("Thread Closed");
-				alertDialogBuilder.setMessage("This thread has been locked by a Moderator.");
-				alertDialogBuilder.setPositiveButton("Okay", null);
-				alertDialogBuilder.show();
-			}
-			else {
-				Intent intent = new Intent().setClass(this, PostMessage.class);
-				intent.putExtra("topicId", topicId);
-				startActivity(intent);
-			}
-		break;
+			case R.id.gotoPage:
+				showGotoPageDialog();
+				break;
+			case R.id.refresh:
+				refresh(false);
+				break;
+			case R.id.reply:
+				if (!TLLib.loginStatus){
+					AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
+					alertDialogBuilder.setTitle("Login Error");
+					alertDialogBuilder.setMessage("Please Login before posting.\n");
+					alertDialogBuilder.setPositiveButton("Okay", null);
+					alertDialogBuilder.show();
+				}
+				else if (postLocked){
+					AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
+					alertDialogBuilder.setTitle("Thread Closed");
+					alertDialogBuilder.setMessage("This thread has been locked by a Moderator.");
+					alertDialogBuilder.setPositiveButton("Okay", null);
+					alertDialogBuilder.show();
+				}
+				else {
+					Intent intent = new Intent().setClass(this, PostMessage.class);
+					intent.putExtra("topicId", topicId);
+					startActivity(intent);
+				}
+				break;
+			case R.id.subscribeThread:
+				if (!TLLib.loginStatus){
+					AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
+					alertDialogBuilder.setTitle("Login Error");
+					alertDialogBuilder.setMessage("Please Login before posting.\n");
+					alertDialogBuilder.setPositiveButton("Okay", null);
+					alertDialogBuilder.show();
+				} else {
+					SubscribeThreadTask subscribeThreadTask = new SubscribeThreadTask();
+					subscribeThreadTask.execute();
+				}
+				break;
 		}
 
 		return true;
 
+	}
+	
+	private class SubscribeThreadTask extends AsyncTask<Void, Void, Boolean> {
+		@Override
+		protected Boolean doInBackground(Void... arg0) {
+			try {
+				TLLib.subscribeThread(Integer.toString(topicId));
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			}
+			return true;
+		}
+		
+		@Override
+		protected void onPostExecute(Boolean result) {
+			if (result) {
+				String unsub = "Thread unsubscribed!";
+				String sub = "Thread subscribed!";
+				Toast.makeText(context, subscribed ? unsub : sub, Toast.LENGTH_SHORT).show();
+				subscribed = !subscribed;
+			}
+				
+		}
 	}
 }

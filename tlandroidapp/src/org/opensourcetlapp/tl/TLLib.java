@@ -70,6 +70,7 @@ public class TLLib {
 	private static final String CREATE_NEW_BLOG_POST_URL = "http://www.teamliquid.net/blogs/addblogentry.php";
 	private static final String POST_URL = "http://www.teamliquid.net/forum/postmessage.php";
 	private static final String PM_URL = "http://www.teamliquid.net/mytlnet/index.php";
+	private static final String SUB_URL = "http://www.teamliquid.net/mytlnet/mythreads.php";
 	private static final String EDIT_URL = "http://www.teamliquid.net/forum/edit.php";
 	private static final String SEARCH_URL = "http://www.teamliquid.net/forum/search.php";
 	private static final String USER_FIELD = "loginname";
@@ -179,7 +180,7 @@ public class TLLib {
 		return loginStatus;
 	}
 	
-	public static void logout(){
+	public static void logout() throws IOException{
 		DefaultHttpClient httpclient = new DefaultHttpClient();
 		httpclient.setCookieStore(cookieStore);
 		
@@ -189,12 +190,37 @@ public class TLLib {
 			httpclient.execute(httpGet);
 		} catch (ClientProtocolException e) {
 			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 		
 		loginStatus = false;
 		cookieStore = null;
+	}
+	
+	public static void subscribeThread(String topicId) throws IOException {
+		DefaultHttpClient httpclient = new DefaultHttpClient();
+		httpclient.setCookieStore(cookieStore);
+		
+		HttpPost httpost = new HttpPost(SUB_URL);
+	    List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+	    nvps.add(new BasicNameValuePair("action", "toggleSub"));
+        nvps.add(new BasicNameValuePair("thread_id", topicId));
+        nvps.add(new BasicNameValuePair("token", tokenField));
+	    Log.d(TAG, "Subscribing Thread");
+	    
+	    try {
+			httpost.setEntity(new UrlEncodedFormEntity(nvps));
+			HttpResponse response = httpclient.execute(httpost);
+			HttpEntity entity = response.getEntity();
+			
+			if (entity != null) {
+				entity.consumeContent();
+			}
+			
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		} catch (ClientProtocolException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public static void sendPM(String to, String subject, String message) throws IOException{
@@ -367,6 +393,11 @@ public class TLLib {
 			Handler handler, Context context) throws IOException{
 			return TagNodeFromURLEx2(cleaner, url, handler, context, "<table width='748' cellpadding='3' cellspacing='0' border='0' style='border:1px solid #00005D;'>", true);
 	}	
+	
+	public static TagNode TagNodeFromURLMySubs(HtmlCleaner cleaner, URL url,
+			Handler handler, Context context) throws IOException{
+			return TagNodeFromURLEx2(cleaner, url, handler, context, "<table width=\"100%\" class=\"solid\" cellspacing=0>", true);
+	}
 	
 	private static final String APPLICATION_TITLE = "Team Liquid";
 	

@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu
   xmlns:android="http://schemas.android.com/apk/res/android">
-      <item android:id="@+id/gotoPage"
-        android:title="Goto Page" />  
+    <item android:id="@+id/gotoPage"
+        android:title="Goto Page" /> 
     <item android:id="@+id/reply"
         android:title="Reply" />  
     <item android:id="@+id/refresh"
-        android:title="Refresh" />  
+        android:title="Refresh" />
+    <item android:id="@+id/subscribeThread"
+        android:title="Subscribe" />  
 </menu>
